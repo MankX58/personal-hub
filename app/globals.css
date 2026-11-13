@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jb), ui-monospace, monospace;
+  --color-bg: #0a0a0f;
+  --color-surface: #14141b;
+  --color-surface-2: #1b1b24;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-muted: #8a8a9a;
+  --color-pink: #ff4d8d;
+  --color-violet: #8b5cf6;
+  --color-cyan: #22d3ee;
+  --color-teal: #2dd4bf;
+  --color-orange: #fb923c;
+  --animate-rise: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-pop: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+  --animate-sheet: sheet 0.35s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  --animate-fade: fade 0.25s ease both;
+  --animate-glow: glow 2.4s ease-in-out infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+@keyframes sheet { from { transform: translateY(100%); } }
+@keyframes fade { from { opacity: 0; } }
+@keyframes glow { 50% { opacity: 0.35; } }
+@keyframes drop { from { opacity: 0; transform: translateY(-6px) scale(.98); } }
+@keyframes draw { from { stroke-dashoffset: var(--len, 1000); } }
+@keyframes grow { from { transform: scaleY(0); } }
+@keyframes burst {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html { color-scheme: dark; -webkit-tap-highlight-color: transparent; }
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background:
+    radial-gradient(60rem 40rem at 110% -10%, rgb(139 92 246 / 0.14), transparent 60%),
+    radial-gradient(50rem 35rem at -20% 110%, rgb(255 77 141 / 0.09), transparent 60%),
+    var(--color-bg);
+  background-attachment: fixed;
+  color: #ececf1;
+}
+
+@layer components {
+.card {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.035), rgb(255 255 255 / 0.01)), var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 20px 40px -20px rgb(0 0 0 / 0.7);
+}
+.glass {
+  background: rgb(20 20 27 / 0.72);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--color-line);
+}
+.grad { background-image: linear-gradient(120deg, var(--color-pink), var(--color-violet) 55%, var(--color-cyan)); }
+.grad-text { background-image: linear-gradient(120deg, #ff7aa8, #a78bfa 55%, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.num { font-family: var(--font-jb), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.field {
+  width: 100%; background: var(--color-surface-2); border: 1px solid var(--color-line);
+  border-radius: 0.9rem; padding: 0.75rem 0.9rem; outline: none; transition: border-color .2s, box-shadow .2s;
+}
+.field:focus { border-color: rgb(139 92 246 / 0.6); box-shadow: 0 0 0 4px rgb(139 92 246 / 0.15); }
+/* Sober, integrated buttons */
+.btn-primary {
+  background: #ececf1; color: #0a0a0f; font-weight: 600;
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.6) inset, 0 10px 30px -12px rgb(236 236 241 / 0.35);
+  transition: transform .15s, background-color .2s, opacity .2s;
+}
+.btn-primary:hover { background: #ffffff; }
+.seg-on {
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.05));
+  color: #fff; box-shadow: 0 1px 0 rgb(255 255 255 / 0.08) inset, 0 4px 12px -4px rgb(0 0 0 / 0.6);
+}
+}
+input[type="time"]::-webkit-calendar-picker-indicator { filter: invert(1) opacity(.5); }
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.pb-nav { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
+@media (min-width: 1024px) { .pb-nav { padding-bottom: 3rem; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }

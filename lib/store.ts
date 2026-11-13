@@ -1,0 +1,175 @@
+"use client";
+import { useEffect, useSyncExternalStore } from "react";
+import { dateKey, rollover, type Task, type Workout } from "./logic";
+import { DEFAULT_PLAN, type Place } from "./routine";
+
+export type State = {
+  tasks: Task[];
+  archive: Task[];
+  rolloverMode: "archive" | "delete";
+  plan: (string | null)[]; // by getDay()
+  gymTimes: string[]; // "HH:MM" or ""
+  choices: Record<string, string>; // slotId -> exerciseId
+  workouts: Record<string, Workout>; // date -> workout
+  uniUrl: string;
+  place: Place;
+};
+
+const DEFAULTS: State = {
+  tasks: [],
+  archive: [],
+  rolloverMode: "archive",
+  plan: DEFAULT_PLAN,
+  gymTimes: ["", "", "", "", "", "", ""],
+  choices: {},
+  workouts: {},
+  uniUrl: "https://gestion-universitaria-fikx.vercel.app",
+  place: "gym",
+};
+
+// Local cache per user + whole-document sync to Neon (/api/state).
+// ponytail: last-write-wins on the whole document; per-field merge if two devices edit at the same time.
+const LEGACY_KEY = "hub:v1";
+let state: State | null = null;
+let userId = "";
+let pushTimer: ReturnType<typeof setTimeout> | undefined;
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+const localKey = () => `hub:v1:${userId}`;
+const pendingKey = () => `hub:pending:${userId}`;
+
+function readLocal(k: string): Partial<State> | null {
+  try {
+    const raw = localStorage.getItem(k);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+function writeLocal() {
+  try {
+    localStorage.setItem(localKey(), JSON.stringify(state));
+  } catch {}
+}
+const isPending = () => { try { return !!localStorage.getItem(pendingKey()); } catch { return false; } };
+
+function applyRollover() {
+  if (!state) return;
+  const r = rollover(state.tasks, state.archive, dateKey(), state.rolloverMode);
+  if (r) update(() => r);
+}
+
+async function push() {
+  clearTimeout(pushTimer);
+  if (!state || !userId) return;
+  try {
+    const res = await fetch("/api/state", { method: "PUT", body: JSON.stringify(state), headers: { "content-type": "application/json" }, keepalive: true });
+    if (res.ok) localStorage.removeItem(pendingKey());
+  } catch {} // offline: stays pending, retried on next change or next load
+}
+
+async function pull() {
+  if (!userId || isPending()) return;
+  try {
+    const res = await fetch("/api/state", { cache: "no-store" });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    if (data && !isPending()) {
+      state = { ...DEFAULTS, ...data };
+      writeLocal();
+      emit();
+      applyRollover();
+    }
+  } catch {}
+}
+
+/** Called once the signed-in user is known. Loads the local cache instantly, then syncs with Neon. */
+export async function connect(uid: string) {
+  if (userId === uid) return;
+  userId = uid;
+  const legacy = readLocal(LEGACY_KEY);
+  const local = readLocal(localKey()) ?? legacy;
+  state = { ...DEFAULTS, ...(local ?? {}) };
+  emit();
+  applyRollover();
+  try {
+    if (isPending()) return void push(); // unsynced offline edits win
+    const res = await fetch("/api/state", { cache: "no-store" });
+    if (!res.ok) return;
+    const { data } = await res.json();
+    if (data) {
+      state = { ...DEFAULTS, ...data };
+      writeLocal();
+      emit();
+      applyRollover();
+    } else if (local) {
+      await push(); // first sign-in: upload what this device already had
+    }
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {}
+}
+
+/** Flush pending changes and forget this user's local data (sign-out). */
+export async function disconnect() {
+  if (isPending()) await push();
+  try {
+    localStorage.removeItem(localKey());
+  } catch {}
+  userId = "";
+  state = null;
+  emit();
+}
+
+if (typeof window !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") pull(); // pick up changes from other devices
+    else if (isPending()) push();
+  });
+}
+
+function get(): State {
+  return state ?? DEFAULTS;
+}
+
+export function update(fn: (s: State) => Partial<State>) {
+  if (!state) return;
+  state = { ...state, ...fn(state) };
+  writeLocal();
+  emit();
+  try {
+    localStorage.setItem(pendingKey(), "1");
+  } catch {}
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(push, 800);
+}
+
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => listeners.delete(l);
+};
+
+/** null until the user's data is loaded (and during SSR) */
+export const useHub = () => useSyncExternalStore(subscribe, () => state, () => null);
+
+/** Current local date, refreshed every 30 s; runs task rollover when the day changes. */
+const subscribeClock = (cb: () => void) => {
+  const id = setInterval(cb, 30_000);
+  return () => clearInterval(id);
+};
+
+export function useToday() {
+  const today = useSyncExternalStore(subscribeClock, () => dateKey(), () => "");
+  useEffect(() => {
+    if (today) applyRollover();
+  }, [today]);
+  return today;
+}
+
+export const uid = () => Math.random().toString(36).slice(2, 10);
+
+export const exportData = () => JSON.stringify(get(), null, 2);
+export function importData(json: string) {
+  const parsed = JSON.parse(json);
+  if (typeof parsed !== "object" || !Array.isArray(parsed.tasks)) throw new Error("Archivo no válido");
+  update(() => ({ ...DEFAULTS, ...parsed }));
+}

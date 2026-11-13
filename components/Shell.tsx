@@ -1,0 +1,82 @@
+"use client";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Icon, type IconName } from "./icons";
+import { useEffect } from "react";
+import { connect, useHub, useToday } from "@/lib/store";
+import { authClient } from "@/lib/auth/client";
+
+const NAV: { href: string; label: string; icon: IconName }[] = [
+  { href: "/", label: "Hoy", icon: "today" },
+  { href: "/gym", label: "Entreno", icon: "gym" },
+  { href: "/progreso", label: "Progreso", icon: "chart" },
+  { href: "/ajustes", label: "Ajustes", icon: "settings" },
+];
+
+export default function Shell({ children }: { children: React.ReactNode }) {
+  const path = usePathname();
+  const hub = useHub();
+  const userId = authClient.useSession().data?.user?.id; // proxy.ts already guarantees a session on app pages
+  useToday(); // keeps the day rollover running on every screen
+  useEffect(() => { if (userId) connect(userId); }, [userId]);
+  const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+  const idx = Math.max(0, NAV.findIndex((n) => active(n.href)));
+  const spring = "cubic-bezier(.34,1.4,.5,1)";
+
+  if (path.startsWith("/auth")) return <>{children}</>; // sign-in screens: no app chrome
+
+  return (
+    <div className="lg:flex">
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex sticky top-0 h-dvh w-64 shrink-0 flex-col gap-2 border-r border-line p-5">
+        <div className="mb-6 flex items-center gap-3 px-2">
+          <div className="grad grid size-10 place-items-center rounded-2xl font-bold text-white shadow-lg shadow-violet/30">H</div>
+          <div>
+            <p className="font-semibold">Hub</p>
+            <p className="text-xs text-muted">Personal</p>
+          </div>
+        </div>
+        <nav className="relative flex flex-col gap-2">
+          {/* sliding highlight: items are h-11 + gap-2 = 3.25rem apart */}
+          <span aria-hidden className="absolute inset-x-0 top-0 h-11 rounded-2xl bg-surface-2 shadow-[0_1px_0_rgb(255_255_255/.05)_inset]"
+            style={{ transform: `translateY(${idx * 3.25}rem)`, transition: `transform .5s ${spring}` }}>
+            <span key={idx} className="absolute left-0 top-2.5 h-6 w-1 rounded-full bg-white/80"
+              style={{ animation: `grow .45s ${spring} both` }} />
+          </span>
+          {NAV.map((n, i) => (
+            <Link key={n.href} href={n.href}
+              className={`group relative flex h-11 items-center gap-3 rounded-2xl px-4 text-sm transition-colors duration-300 ${i === idx ? "text-white" : "text-muted hover:bg-white/[0.03] hover:text-white"}`}>
+              <Icon name={n.icon} className={`size-5 transition-transform duration-500 ${i === idx ? "scale-110" : "group-hover:translate-x-0.5"}`} />
+              <span className={`transition-transform duration-500 ${i === idx ? "translate-x-1" : ""}`}>{n.label}</span>
+            </Link>
+          ))}
+        </nav>
+        {hub && (
+          <a href={hub.uniUrl} target="_blank" rel="noreferrer"
+            className="card mt-auto flex items-center gap-3 p-4 text-sm transition hover:border-violet/40">
+            <span className="grid size-9 place-items-center rounded-xl bg-violet/15 text-violet"><Icon name="book" className="size-4" /></span>
+            <span className="flex-1">Mi semestre<span className="block text-xs text-muted">Gestión universitaria</span></span>
+            <Icon name="external" className="size-4 text-muted" />
+          </a>
+        )}
+      </aside>
+
+      <main className="pb-nav mx-auto w-full max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 lg:px-10 lg:pt-10">
+        {hub ? children : <div className="grid h-[60dvh] place-items-center"><div className="grad size-10 animate-glow rounded-2xl" /></div>}
+      </main>
+
+      {/* Mobile / tablet bottom bar */}
+      <nav className="glass fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 mx-auto flex max-w-md rounded-[1.75rem] p-1.5 shadow-2xl shadow-black/60 lg:hidden">
+        <span aria-hidden className="absolute inset-y-1.5 left-1.5 w-[calc((100%-0.75rem)/4)] rounded-[1.4rem] bg-white/[0.07]"
+          style={{ transform: `translateX(${idx * 100}%)`, transition: `transform .5s ${spring}` }} />
+        {NAV.map((n) => (
+          <Link key={n.href} href={n.href} aria-label={n.label}
+            className={`relative flex flex-1 flex-col items-center gap-1 rounded-[1.4rem] py-2.5 text-[11px] transition-all duration-300 ${active(n.href) ? "text-white" : "text-muted active:scale-95"}`}>
+            <Icon name={n.icon} className={`size-[22px] transition ${active(n.href) ? "text-pink drop-shadow-[0_0_8px_rgb(255_77_141/0.6)]" : ""}`} />
+            {n.label}
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}
