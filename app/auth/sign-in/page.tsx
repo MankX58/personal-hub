@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import { Icon } from "@/components/icons";
+import { Icon, Logo } from "@/components/icons";
 import { Ring } from "@/components/ui";
 
 const ERRORS: Record<string, string> = {
@@ -154,8 +154,8 @@ export default function SignIn() {
 function Brand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="grad grid size-10 place-items-center rounded-2xl font-bold text-white shadow-lg shadow-violet/30">H</div>
-      <div><p className="font-semibold">Hub</p><p className="text-xs text-muted">Personal</p></div>
+      <Logo />
+      <div><p className="font-semibold">Mi Espacio</p><p className="text-xs text-muted">Tareas y entreno</p></div>
     </div>
   );
 }

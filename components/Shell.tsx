@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Icon, type IconName } from "./icons";
+import { Icon, Logo, type IconName } from "./icons";
 import { useEffect } from "react";
 import { connect, useHub, useToday } from "@/lib/store";
 import { authClient } from "@/lib/auth/client";
@@ -30,10 +30,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex sticky top-0 h-dvh w-64 shrink-0 flex-col gap-2 border-r border-line p-5">
         <div className="mb-6 flex items-center gap-3 px-2">
-          <div className="grad grid size-10 place-items-center rounded-2xl font-bold text-white shadow-lg shadow-violet/30">H</div>
+          <Logo />
           <div>
-            <p className="font-semibold">Hub</p>
-            <p className="text-xs text-muted">Personal</p>
+            <p className="font-semibold">Mi Espacio</p>
+            <p className="text-xs text-muted">Tareas y entreno</p>
           </div>
         </div>
         <nav className="relative flex flex-col gap-2">

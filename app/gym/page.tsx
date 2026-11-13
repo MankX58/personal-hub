@@ -64,7 +64,7 @@ function WorkoutView({ hub, routine, onEdit, onNew }: { hub: State; routine: Rou
 
   return (
     <div className="mx-auto max-w-3xl">
-      <header className="flex items-end justify-between gap-3 animate-rise">
+      <header className="relative z-20 flex items-end justify-between gap-3 animate-rise">
         <div className="min-w-0">
           <p className="truncate text-sm text-muted">{routine.name}</p>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Entreno</h1>

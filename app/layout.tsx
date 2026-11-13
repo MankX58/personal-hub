@@ -7,9 +7,9 @@ const sora = Sora({ variable: "--font-sora", subsets: ["latin"] });
 const mono = JetBrains_Mono({ variable: "--font-jb", subsets: ["latin"], weight: ["300", "500", "700"] });
 
 export const metadata: Metadata = {
-  title: "Hub",
+  title: { default: "Mi Espacio", template: "%s — Mi Espacio" },
   description: "Tu día y tu entreno en un solo lugar",
-  appleWebApp: { capable: true, title: "Hub", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Mi Espacio", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

@@ -86,11 +86,14 @@ export default function Progress() {
           <p className="mt-2 text-5xl font-extralight"><CountUp value={st} /></p>
           <p className="text-xs text-muted">entrenos seguidos</p>
         </div>
-        <div className="card flex items-center gap-4 p-5 animate-rise [animation-delay:60ms]">
-          <Ring value={sessionsWeek / plannedPerWeek} size={76} stroke={7} colors={["#22d3ee", "#8b5cf6"]}>
-            <p className="num text-lg font-semibold">{sessionsWeek}<span className="text-muted">/{plannedPerWeek}</span></p>
-          </Ring>
-          <div><p className="text-[11px] uppercase tracking-widest text-muted">Semana</p><p className="mt-1 text-sm">sesiones</p></div>
+        <div className="card p-5 animate-rise [animation-delay:60ms]">
+          <p className="text-[11px] uppercase tracking-widest text-muted">Semana</p>
+          <div className="mt-2 flex items-center gap-3">
+            <Ring value={sessionsWeek / plannedPerWeek} size={64} stroke={6} colors={["#22d3ee", "#8b5cf6"]}>
+              <p className="num text-base font-semibold">{sessionsWeek}<span className="text-muted">/{plannedPerWeek}</span></p>
+            </Ring>
+            <p className="text-xs text-muted">sesiones</p>
+          </div>
         </div>
         <div className="card p-5 animate-rise [animation-delay:120ms]">
           <p className="text-[11px] uppercase tracking-widest text-muted">Volumen semana</p>
