@@ -70,11 +70,13 @@ function applyRollover() {
   if (r) update(() => r);
 }
 
-async function push() {
+async function push(leaving = false) {
   clearTimeout(pushTimer);
   if (!state || !userId) return;
+  const body = JSON.stringify(state);
   try {
-    const res = await fetch("/api/state", { method: "PUT", body: JSON.stringify(state), headers: { "content-type": "application/json" }, keepalive: true });
+    // keepalive lets the request survive closing the tab, but browsers reject keepalive bodies over 64 KB
+    const res = await fetch("/api/state", { method: "PUT", body, headers: { "content-type": "application/json" }, keepalive: leaving && body.length < 60_000 });
     if (res.ok) localStorage.removeItem(pendingKey());
   } catch {} // offline: stays pending, retried on next change or next load
 }
@@ -121,17 +123,14 @@ export async function connect(uid: string) {
 export async function disconnect() {
   if (isPending()) await push();
   try {
-    localStorage.removeItem(localKey());
+    if (!isPending()) localStorage.removeItem(localKey()); // keep unsynced data for the next sign-in
   } catch {}
-  userId = "";
-  state = null;
-  emit();
 }
 
 if (typeof window !== "undefined") {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") pull(); // pick up changes from other devices
-    else if (isPending()) push();
+    else if (isPending()) push(true);
   });
 }
 

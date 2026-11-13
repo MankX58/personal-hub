@@ -1,6 +1,5 @@
 "use client";
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
 import { Icon } from "@/components/icons";
 import { Select } from "@/components/ui";
@@ -99,16 +98,18 @@ export default function Settings() {
 }
 
 function Account() {
-  const router = useRouter();
   const { data } = authClient.useSession();
   const [busy, setBusy] = useState(false);
   const user = data?.user;
   const logout = async () => {
     setBusy(true);
-    await disconnect(); // flush unsynced changes first
-    await authClient.signOut();
-    router.replace("/auth/sign-in");
-    router.refresh();
+    try {
+      await disconnect(); // flush unsynced changes first
+      await fetch("/api/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+    } finally {
+      // full reload: clears the cached session, router cache and in-memory data
+      window.location.replace("/auth/sign-in");
+    }
   };
   return (
     <section className="card flex items-center gap-4 p-5 sm:p-6 animate-rise">
