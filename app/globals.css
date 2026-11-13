@@ -3,11 +3,11 @@
 @theme {
   --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jb), ui-monospace, monospace;
-  --color-bg: #0a0a0f;
-  --color-surface: #14141b;
-  --color-surface-2: #1b1b24;
-  --color-line: rgb(255 255 255 / 0.07);
-  --color-muted: #8a8a9a;
+  --color-bg: #0e0e11;
+  --color-surface: #16161a;
+  --color-surface-2: #1d1d22;
+  --color-line: rgb(255 255 255 / 0.08);
+  --color-muted: #8b8b96;
   --color-pink: #ff4d8d;
   --color-violet: #8b5cf6;
   --color-cyan: #22d3ee;
@@ -36,8 +36,8 @@
 html { color-scheme: dark; -webkit-tap-highlight-color: transparent; }
 body {
   background:
-    radial-gradient(60rem 40rem at 110% -10%, rgb(139 92 246 / 0.14), transparent 60%),
-    radial-gradient(50rem 35rem at -20% 110%, rgb(255 77 141 / 0.09), transparent 60%),
+    radial-gradient(60rem 40rem at 110% -10%, rgb(255 77 141 / 0.1), transparent 60%),
+    radial-gradient(50rem 35rem at -20% 110%, rgb(255 77 141 / 0.04), transparent 60%),
     var(--color-bg);
   background-attachment: fixed;
   color: #ececf1;
@@ -56,14 +56,15 @@ body {
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
   border: 1px solid var(--color-line);
 }
-.grad { background-image: linear-gradient(120deg, var(--color-pink), var(--color-violet) 55%, var(--color-cyan)); }
-.grad-text { background-image: linear-gradient(120deg, #ff7aa8, #a78bfa 55%, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* acento propio de Mi Espacio (Mi semestre = lavanda, Mis finanzas = latón) */
+.grad { background-image: linear-gradient(135deg, #ff8ab3, var(--color-pink)); }
+.grad-text { background-image: linear-gradient(120deg, #ffb3cd, var(--color-pink)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .num { font-family: var(--font-jb), ui-monospace, monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
 .field {
   width: 100%; background: var(--color-surface-2); border: 1px solid var(--color-line);
   border-radius: 0.9rem; padding: 0.75rem 0.9rem; outline: none; transition: border-color .2s, box-shadow .2s;
 }
-.field:focus { border-color: rgb(139 92 246 / 0.6); box-shadow: 0 0 0 4px rgb(139 92 246 / 0.15); }
+.field:focus { border-color: rgb(255 77 141 / 0.6); box-shadow: 0 0 0 4px rgb(255 77 141 / 0.15); }
 /* Sober, integrated buttons */
 .btn-primary {
   background: #ececf1; color: #0a0a0f; font-weight: 600;

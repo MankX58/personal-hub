@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, Logo, type IconName } from "./icons";
+import { AppSwitcher } from "./AppSwitcher";
 import { useEffect } from "react";
 import { connect, useHub, useToday } from "@/lib/store";
 import { authClient } from "@/lib/auth/client";
@@ -29,39 +30,38 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     <div className="lg:flex">
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex sticky top-0 h-dvh w-64 shrink-0 flex-col gap-2 border-r border-line p-5">
-        <div className="mb-6 flex items-center gap-3 px-2">
+        <div className="mb-4 flex items-center gap-3 px-2">
           <Logo />
           <div>
             <p className="font-semibold">Mi Espacio</p>
             <p className="text-xs text-muted">Tareas y entreno</p>
           </div>
         </div>
+        <AppSwitcher className="mb-4" />
         <nav className="relative flex flex-col gap-2">
           {/* sliding highlight: items are h-11 + gap-2 = 3.25rem apart */}
           <span aria-hidden className="absolute inset-x-0 top-0 h-11 rounded-2xl bg-surface-2 shadow-[0_1px_0_rgb(255_255_255/.05)_inset]"
             style={{ transform: `translateY(${idx * 3.25}rem)`, transition: `transform .5s ${spring}` }}>
-            <span key={idx} className="absolute left-0 top-2.5 h-6 w-1 rounded-full bg-white/80"
+            <span key={idx} className="absolute left-0 top-2.5 h-6 w-1 rounded-full bg-pink"
               style={{ animation: `grow .45s ${spring} both` }} />
           </span>
           {NAV.map((n, i) => (
             <Link key={n.href} href={n.href}
               className={`group relative flex h-11 items-center gap-3 rounded-2xl px-4 text-sm transition-colors duration-300 ${i === idx ? "text-white" : "text-muted hover:bg-white/[0.03] hover:text-white"}`}>
-              <Icon name={n.icon} className={`size-5 transition-transform duration-500 ${i === idx ? "scale-110" : "group-hover:translate-x-0.5"}`} />
+              <Icon name={n.icon} className={`size-5 transition-transform duration-500 ${i === idx ? "scale-110 text-pink" : "group-hover:translate-x-0.5"}`} />
               <span className={`transition-transform duration-500 ${i === idx ? "translate-x-1" : ""}`}>{n.label}</span>
             </Link>
           ))}
         </nav>
-        {hub && (
-          <a href={hub.uniUrl} target="_blank" rel="noreferrer"
-            className="card mt-auto flex items-center gap-3 p-4 text-sm transition hover:border-violet/40">
-            <span className="grid size-9 place-items-center rounded-xl bg-violet/15 text-violet"><Icon name="book" className="size-4" /></span>
-            <span className="flex-1">Mi semestre<span className="block text-xs text-muted">Gestión universitaria</span></span>
-            <Icon name="external" className="size-4 text-muted" />
-          </a>
-        )}
       </aside>
 
       <main className="pb-nav mx-auto w-full max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 lg:px-10 lg:pt-10">
+        {/* Móvil / tablet: marca + selector de apps */}
+        <div className="mb-5 flex items-center gap-3 lg:hidden">
+          <Logo className="size-9" />
+          <span className="flex-1 font-semibold">Mi Espacio</span>
+          <AppSwitcher className="w-32" />
+        </div>
         {hub ? children : <div className="grid h-[60dvh] place-items-center"><div className="grad size-10 animate-glow rounded-2xl" /></div>}
       </main>
 

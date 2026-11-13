@@ -137,11 +137,6 @@ export default function Today() {
 
       {/* Side column */}
       <aside className="space-y-4">
-        <a href={hub.uniUrl} target="_blank" rel="noreferrer" className="card group flex items-center gap-4 p-5 transition hover:border-violet/40 lg:hidden">
-          <span className="grid size-11 place-items-center rounded-2xl bg-violet/15 text-violet"><Icon name="book" /></span>
-          <span className="flex-1"><span className="block font-medium">Mi semestre</span><span className="text-xs text-muted">Horario, notas y exámenes</span></span>
-          <Icon name="external" className="size-4 text-muted transition group-hover:translate-x-0.5" />
-        </a>
         <GymCard hub={hub} today={today} />
         {hub.rolloverMode === "archive" && hub.archive.length > 0 && (
           <div className="card p-5">

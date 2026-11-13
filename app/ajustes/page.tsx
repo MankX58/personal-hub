@@ -77,11 +77,6 @@ export default function Settings() {
         )}
       </section>
 
-      <section className="card p-5 sm:p-6 animate-rise [animation-delay:120ms]">
-        <h2 className="flex items-center gap-2 font-semibold"><Icon name="book" className="size-4 text-violet" />Gestión universitaria</h2>
-        <p className="mt-1 text-xs text-muted">Acceso directo desde Hoy y la barra lateral.</p>
-        <input value={hub.uniUrl} onChange={(e) => update(() => ({ uniUrl: e.target.value }))} className="field mt-4 text-sm" inputMode="url" />
-      </section>
 
       <section className="card p-5 sm:p-6 animate-rise [animation-delay:180ms]">
         <h2 className="font-semibold">Tus datos</h2>

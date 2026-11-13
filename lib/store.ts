@@ -13,7 +13,6 @@ export type State = {
   activeRoutine: string;
   custom: Record<string, CustomEx>; // user-made exercises
   workouts: Record<string, Workout>; // date -> workout
-  uniUrl: string;
 };
 
 const DEFAULTS: State = {
@@ -25,7 +24,6 @@ const DEFAULTS: State = {
   activeRoutine: "",
   custom: {},
   workouts: {},
-  uniUrl: "https://gestion-universitaria-fikx.vercel.app",
 };
 
 type Legacy = Partial<State> & { plan?: (string | null)[]; choices?: Record<string, string>; place?: "gym" | "home" };
