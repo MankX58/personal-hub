@@ -5,7 +5,8 @@ import { authClient } from "@/lib/auth/client";
 import { Icon } from "@/components/icons";
 import { Select } from "@/components/ui";
 import { disconnect, exportData, importData, update, useHub } from "@/lib/store";
-import { DAYS, WEEKDAYS, dayById } from "@/lib/routine";
+import Link from "next/link";
+import { WEEKDAYS, getRoutine } from "@/lib/routine";
 
 const ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday first
 
@@ -14,7 +15,9 @@ export default function Settings() {
   const file = useRef<HTMLInputElement>(null);
   const [msg, setMsg] = useState("");
 
-  const setPlan = (wd: number, v: string) => update((s) => { const p = [...s.plan]; p[wd] = v || null; return { plan: p }; });
+  const routine = getRoutine(hub);
+  const days = routine?.days ?? [];
+  const setPlan = (wd: number, v: string) => update((s) => ({ routines: s.routines.map((r) => { if (r.id !== routine?.id) return r; const p = [...r.plan]; p[wd] = v || null; return { ...r, plan: p }; }) }));
   const setTime = (wd: number, v: string) => update((s) => { const t = [...s.gymTimes]; t[wd] = v; return { gymTimes: t }; });
 
   const download = () => {
@@ -39,15 +42,19 @@ export default function Settings() {
 
       <section className="card relative z-10 p-5 sm:p-6 animate-rise">
         <h2 className="font-semibold">Semana de entreno</h2>
-        <p className="mt-1 text-xs text-muted">Elige qué día de la rutina toca cada día y, si quieres, a qué hora. Sin hora, el entreno aparece el primero en tus tareas.</p>
-        <ul className="mt-5 space-y-2">
+        <p className="mt-1 text-xs text-muted">
+          {routine ? <>Rutina activa: <b className="font-medium text-white">{routine.name}</b>. </> : null}
+          Elige qué día toca cada día y, si quieres, a qué hora. Sin hora, el entreno aparece el primero en tus tareas.
+        </p>
+        {!routine && <Link href="/gym" className="btn-primary mt-4 inline-block rounded-xl px-4 py-2.5 text-sm">Crear mi rutina</Link>}
+        <ul className={`mt-5 space-y-2 ${routine ? "" : "hidden"}`}>
           {ORDER.map((wd) => {
-            const day = dayById(hub.plan[wd]);
+            const day = days.find((d) => d.id === routine?.plan[wd]);
             return (
               <li key={wd} className="grid grid-cols-[2.25rem_minmax(0,1fr)_6.25rem] items-center gap-2 sm:grid-cols-[6rem_minmax(0,1fr)_8rem] sm:gap-3">
                 <span className="text-sm"><span className="sm:hidden">{WEEKDAYS[wd].slice(0, 3)}</span><span className="hidden sm:inline">{WEEKDAYS[wd]}</span></span>
-                <Select value={hub.plan[wd] ?? ""} onChange={(v) => setPlan(wd, v)} label={`Rutina ${WEEKDAYS[wd]}`}
-                  options={[{ value: "", label: "Descanso" }, ...DAYS.map((d) => ({ value: d.id, label: d.name, color: d.color }))]} />
+                <Select value={routine?.plan[wd] ?? ""} onChange={(v) => setPlan(wd, v)} label={`Rutina ${WEEKDAYS[wd]}`}
+                  options={[{ value: "", label: "Descanso" }, ...days.map((d) => ({ value: d.id, label: d.name || "Sin nombre", color: d.color }))]} />
                 <input type="time" value={hub.gymTimes[wd]} disabled={!day} onChange={(e) => setTime(wd, e.target.value)}
                   className="field num min-w-0 px-2 py-2.5 text-center text-sm disabled:opacity-30" aria-label={`Hora ${WEEKDAYS[wd]}`} />
               </li>

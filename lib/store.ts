@@ -1,31 +1,42 @@
 "use client";
 import { useEffect, useSyncExternalStore } from "react";
 import { dateKey, rollover, type Task, type Workout } from "./logic";
-import { DEFAULT_PLAN, type Place } from "./routine";
+import { migrateLegacy, type Routine } from "./routine";
+import type { CustomEx } from "./exercises";
 
 export type State = {
   tasks: Task[];
   archive: Task[];
   rolloverMode: "archive" | "delete";
-  plan: (string | null)[]; // by getDay()
-  gymTimes: string[]; // "HH:MM" or ""
-  choices: Record<string, string>; // slotId -> exerciseId
+  gymTimes: string[]; // "HH:MM" or "", by getDay()
+  routines: Routine[];
+  activeRoutine: string;
+  custom: Record<string, CustomEx>; // user-made exercises
   workouts: Record<string, Workout>; // date -> workout
   uniUrl: string;
-  place: Place;
 };
 
 const DEFAULTS: State = {
   tasks: [],
   archive: [],
   rolloverMode: "archive",
-  plan: DEFAULT_PLAN,
   gymTimes: ["", "", "", "", "", "", ""],
-  choices: {},
+  routines: [],
+  activeRoutine: "",
+  custom: {},
   workouts: {},
   uniUrl: "https://gestion-universitaria-fikx.vercel.app",
-  place: "gym",
 };
+
+type Legacy = Partial<State> & { plan?: (string | null)[]; choices?: Record<string, string>; place?: "gym" | "home" };
+
+/** Old single-routine documents (fixed PPL+UL with gym/home toggle) → user routines. New users start empty. */
+export function migrate(raw: Legacy): State {
+  const { plan, choices, place, ...rest } = raw;
+  const s: State = { ...DEFAULTS, ...rest };
+  if (!raw.routines) Object.assign(s, migrateLegacy({ plan, choices, place }));
+  return s;
+}
 
 // Local cache per user + whole-document sync to Neon (/api/state).
 // ponytail: last-write-wins on the whole document; per-field merge if two devices edit at the same time.
@@ -75,7 +86,7 @@ async function pull() {
     if (!res.ok) return;
     const { data } = await res.json();
     if (data && !isPending()) {
-      state = { ...DEFAULTS, ...data };
+      state = migrate(data);
       writeLocal();
       emit();
       applyRollover();
@@ -87,9 +98,8 @@ async function pull() {
 export async function connect(uid: string) {
   if (userId === uid) return;
   userId = uid;
-  const legacy = readLocal(LEGACY_KEY);
-  const local = readLocal(localKey()) ?? legacy;
-  state = { ...DEFAULTS, ...(local ?? {}) };
+  const local = readLocal(localKey());
+  state = migrate(local ?? {});
   emit();
   applyRollover();
   try {
@@ -98,12 +108,10 @@ export async function connect(uid: string) {
     if (!res.ok) return;
     const { data } = await res.json();
     if (data) {
-      state = { ...DEFAULTS, ...data };
+      state = migrate(data);
       writeLocal();
       emit();
       applyRollover();
-    } else if (local) {
-      await push(); // first sign-in: upload what this device already had
     }
     localStorage.removeItem(LEGACY_KEY);
   } catch {}
@@ -171,5 +179,5 @@ export const exportData = () => JSON.stringify(get(), null, 2);
 export function importData(json: string) {
   const parsed = JSON.parse(json);
   if (typeof parsed !== "object" || !Array.isArray(parsed.tasks)) throw new Error("Archivo no válido");
-  update(() => ({ ...DEFAULTS, ...parsed }));
+  update(() => migrate(parsed));
 }

@@ -4,8 +4,8 @@ import { Icon } from "@/components/icons";
 import { AreaChart, Bars, CountUp, Heatmap, Ring, Select } from "@/components/ui";
 import { useHub, useToday } from "@/lib/store";
 import { addDays, exerciseHistory, hasWork, parseKey, streak, volume, weekStart } from "@/lib/logic";
-import { DAYS } from "@/lib/routine";
-import { EXERCISES, MUSCLE_LABEL, type Muscle } from "@/lib/exercises";
+import { EMPTY_PLAN, getRoutine } from "@/lib/routine";
+import { EXERCISES, MUSCLE_LABEL, getEx, type Muscle } from "@/lib/exercises";
 
 const short = (k: string) => `${+k.slice(8)}/${+k.slice(5, 7)}`;
 
@@ -15,7 +15,9 @@ export default function Progress() {
   const W = hub.workouts;
   const dates = Object.keys(W).filter((d) => hasWork(W[d])).sort();
   const thisWeek = weekStart(today);
-  const plannedPerWeek = hub.plan.filter(Boolean).length || 1;
+  const routine = getRoutine(hub);
+  const plan = routine?.plan ?? EMPTY_PLAN;
+  const plannedPerWeek = plan.filter(Boolean).length || 1;
 
   const weekVol = (ws: string) => dates.filter((d) => weekStart(d) === ws).reduce((a, d) => a + Object.values(W[d].sets).reduce((b, s) => b + volume(s), 0), 0);
   const weeks = Array.from({ length: 8 }, (_, i) => addDays(thisWeek, (i - 7) * 7));
@@ -23,7 +25,7 @@ export default function Progress() {
   const vNow = vols[7], vPrev = vols[6];
   const vDelta = vPrev ? ((vNow - vPrev) / vPrev) * 100 : 0;
   const sessionsWeek = dates.filter((d) => weekStart(d) === thisWeek).length;
-  const st = streak(W, hub.plan, today);
+  const st = streak(W, plan, today);
   const totalSets = dates.reduce((a, d) => a + Object.values(W[d].sets).reduce((b, s) => b + s.filter((x) => x.done).length, 0), 0);
 
   // heatmap: 18 weeks
@@ -32,7 +34,7 @@ export default function Progress() {
     return Array.from({ length: 7 }, (_, d) => {
       const date = addDays(ws, d);
       const v = hasWork(W[date]) ? Math.min(1, Object.values(W[date].sets).reduce((b, s) => b + s.filter((x) => x.done).length, 0) / 20) || 0.5 : 0;
-      return { date, v: date > today ? 0 : v, planned: !!hub.plan[parseKey(date).getDay()] && date <= today };
+      return { date, v: date > today ? 0 : v, planned: !!plan[parseKey(date).getDay()] && date <= today };
     });
   });
 
@@ -41,7 +43,7 @@ export default function Progress() {
     const acc: Partial<Record<Muscle, number>> = {};
     for (const d of dates.filter((d) => weekStart(d) === thisWeek))
       for (const [id, sets] of Object.entries(W[d].sets)) {
-        const n = sets.filter((s) => s.done).length, ex = EXERCISES[id];
+        const n = sets.filter((s) => s.done).length, ex = getEx(id, hub.custom);
         if (!ex || !n) continue;
         ex.muscles.forEach((m, i) => (acc[m] = (acc[m] ?? 0) + (i === 0 ? n : n * 0.5)));
       }
@@ -50,7 +52,7 @@ export default function Progress() {
   const tracked: Muscle[] = ["pecho", "dorsal", "espalda-alta", "hombro-lat", "hombro-post", "biceps", "triceps", "cuadriceps", "isquios", "gluteo", "gemelos", "abdomen"];
 
   // exercises with history
-  const logged = Object.keys(EXERCISES).filter((id) => dates.some((d) => W[d].sets[id]?.some((s) => s.done)));
+  const logged = [...Object.keys(hub.custom), ...Object.keys(EXERCISES)].filter((id) => dates.some((d) => W[d].sets[id]?.some((s) => s.done)));
   const [sel, setSel] = useState<string | null>(null);
   const exId = sel && logged.includes(sel) ? sel : logged[0];
   const hist = exId ? exerciseHistory(W, exId) : [];
@@ -109,7 +111,7 @@ export default function Progress() {
             <h2 className="font-semibold">{unit === "kg" ? "1RM estimado" : "Mejores reps"}</h2>
             {logged.length > 0 && (
               <Select value={exId} onChange={setSel} label="Ejercicio" className="w-[60%] max-w-72"
-                options={logged.map((id) => ({ value: id, label: EXERCISES[id].name }))} />
+                options={logged.map((id) => ({ value: id, label: getEx(id, hub.custom).name }))} />
             )}
           </div>
           {hist.length ? (
@@ -165,7 +167,7 @@ export default function Progress() {
             <p className="mb-4 text-xs text-muted">Últimas 18 semanas</p>
             <Heatmap cells={heat} />
             <div className="mt-4 flex flex-wrap gap-2">
-              {DAYS.map((d) => {
+              {(routine?.days ?? []).map((d) => {
                 const n = dates.filter((x) => W[x].dayId === d.id).length;
                 return <span key={d.id} className="num rounded-full px-3 py-1 text-xs" style={{ background: `${d.color}1a`, color: d.color }}>{d.name} · {n}</span>;
               })}
@@ -179,7 +181,7 @@ export default function Progress() {
               <ul className="mt-4 divide-y divide-line">
                 {prs.map((p) => (
                   <li key={p.id + p.date} className="flex items-center gap-3 py-2.5 text-sm">
-                    <span className="flex-1 truncate">{EXERCISES[p.id].name}</span>
+                    <span className="flex-1 truncate">{getEx(p.id, hub.custom).name}</span>
                     <span className="num text-orange">{p.val.toFixed(1)} kg</span>
                     <span className="num w-12 text-right text-xs text-muted">{short(p.date)}</span>
                   </li>

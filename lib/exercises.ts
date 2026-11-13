@@ -423,5 +423,17 @@ export const EXERCISES: Record<string, Exercise> = {
   },
 };
 
+/** Exercise created by the user (muscles optional) */
+export type CustomEx = { name: string; muscles: Muscle[]; equipment?: string };
+
+export function getEx(id: string, custom: Record<string, CustomEx> = {}): Exercise {
+  const c = custom[id];
+  if (c) return { name: c.name, muscles: c.muscles, equipment: c.equipment || "Personalizado", steps: [], tips: [] };
+  return EXERCISES[id] ?? { name: id, muscles: [], equipment: "", steps: [], tips: [] };
+}
+
+/** lowercase, no accents — for search */
+export const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
 export const youtubeUrl = (ex: Exercise) =>
   `https://www.youtube.com/results?search_query=${encodeURIComponent(ex.name + " técnica")}`;

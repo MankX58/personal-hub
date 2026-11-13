@@ -2,12 +2,13 @@
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/icons";
 import { Burst, Collapse, CountUp, MuscleMap, Ring, Sheet, stagger } from "@/components/ui";
+import { Select } from "@/components/ui";
 import { update, useHub, useToday, type State } from "@/lib/store";
 import { e1rm, parseKey, previousBest, volume, type SetLog, type Workout } from "@/lib/logic";
-import { DAYS, dayById, slotsFor, type Day, type Place, type Slot } from "@/lib/routine";
-import { EXERCISES, MUSCLE_LABEL, youtubeUrl } from "@/lib/exercises";
+import { getRoutine, type Day, type Routine, type Slot } from "@/lib/routine";
+import { MUSCLE_LABEL, getEx, youtubeUrl } from "@/lib/exercises";
+import { RoutineEditor, TemplatePicker, editRoutine } from "@/components/RoutineEditor";
 
-const pick = (hub: State, slot: Slot) => (hub.choices[slot.id] && slot.options.includes(hub.choices[slot.id]) ? hub.choices[slot.id] : slot.options[0]);
 const fmtRest = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 const num = (s: string) => { const n = parseFloat(s.replace(",", ".")); return isFinite(n) && n >= 0 ? n : 0; };
 
@@ -18,50 +19,78 @@ function lastSession(workouts: Record<string, Workout>, exId: string, before: st
 
 export default function Gym() {
   const hub = useHub()!;
+  const routine = getRoutine(hub);
+  const [mode, setMode] = useState<"view" | "edit" | "new">("view");
+
+  if (!routine || mode === "new")
+    return (
+      <div className="mx-auto max-w-3xl">
+        {routine && <button onClick={() => setMode("view")} className="mb-4 text-sm text-muted hover:text-white">← Volver</button>}
+        <TemplatePicker first={!routine} onCreated={(r) => setMode(r.days.length ? "view" : "edit")} />
+      </div>
+    );
+
+  if (mode === "edit")
+    return <div className="mx-auto max-w-3xl"><RoutineEditor hub={hub} routine={routine} onDone={() => setMode("view")} /></div>;
+
+  return <WorkoutView key={routine.id} hub={hub} routine={routine} onEdit={() => setMode("edit")} onNew={() => setMode("new")} />;
+}
+
+function WorkoutView({ hub, routine, onEdit, onNew }: { hub: State; routine: Routine; onEdit: () => void; onNew: () => void }) {
   const today = useToday();
-  const planned = hub.plan[parseKey(today).getDay()];
-  const [dayId, setDayId] = useState(hub.workouts[today]?.dayId ?? planned ?? "push");
-  const day = dayById(dayId)!;
+  const planned = routine.plan[parseKey(today).getDay()];
+  const [dayId, setDayId] = useState(hub.workouts[today]?.dayId ?? planned ?? "");
+  const day = routine.days.find((d) => d.id === dayId) ?? routine.days.find((d) => d.id === planned) ?? routine.days[0];
   const [info, setInfo] = useState<Slot | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [rest, setRest] = useState<{ end: number; total: number } | null>(null);
   const [summary, setSummary] = useState(false);
 
   const workout = hub.workouts[today];
-  const logging = !workout || workout.dayId === dayId; // today's log belongs to this day
-  const place = hub.place;
-  const slots = slotsFor(day, place);
-  const totalSets = slots.reduce((a, s) => a + s.sets, 0);
-  const doneSets = logging ? slots.reduce((a, s) => a + (workout?.sets[pick(hub, s)]?.filter((x) => x.done).length ?? 0), 0) : 0;
+  const logging = !!day && (!workout || workout.dayId === day.id); // today's log belongs to this day
+  const slots = day?.slots ?? [];
+  const totalSets = slots.reduce((a, s) => a + s.sets, 0) || 1;
+  const doneSets = logging ? slots.reduce((a, s) => a + (workout?.sets[s.ex]?.filter((x) => x.done).length ?? 0), 0) : 0;
   const minutes = Math.round(slots.reduce((a, s) => a + s.sets * (s.rest + 45), 0) / 60);
 
   const setRow = (exId: string, i: number, patch: Partial<SetLog>) =>
     update((s) => {
-      const w: Workout = s.workouts[today] ?? { dayId, done: false, sets: {} };
+      const w: Workout = s.workouts[today] ?? { dayId: day!.id, done: false, sets: {} };
       const rows = [...(w.sets[exId] ?? [])];
       while (rows.length <= i) rows.push({ w: 0, r: 0, done: false });
       rows[i] = { ...rows[i], ...patch };
-      return { workouts: { ...s.workouts, [today]: { ...w, dayId, place, sets: { ...w.sets, [exId]: rows } } } };
+      return { workouts: { ...s.workouts, [today]: { ...w, dayId: day!.id, sets: { ...w.sets, [exId]: rows } } } };
     });
 
   return (
     <div className="mx-auto max-w-3xl">
-      <header className="flex items-end justify-between animate-rise">
-        <div>
-          <p className="text-sm text-muted">Rutina PPL + UL</p>
+      <header className="flex items-end justify-between gap-3 animate-rise">
+        <div className="min-w-0">
+          <p className="truncate text-sm text-muted">{routine.name}</p>
           <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Entreno</h1>
         </div>
-        <PlaceToggle place={place} />
+        <div className="flex shrink-0 items-center gap-2">
+          {hub.routines.length > 1 && (
+            <Select className="w-32 sm:w-44" label="Rutina" value={routine.id}
+              onChange={(v) => update(() => ({ activeRoutine: v }))}
+              options={hub.routines.map((r) => ({ value: r.id, label: r.name || "Sin nombre" }))} />
+          )}
+          <button onClick={onEdit} aria-label="Editar rutina" title="Editar rutina" className="grid size-11 place-items-center rounded-2xl bg-surface-2 text-muted transition hover:text-white"><Icon name="edit" className="size-[18px]" /></button>
+          <button onClick={onNew} aria-label="Nueva rutina" title="Nueva rutina" className="grid size-11 place-items-center rounded-2xl bg-surface-2 text-muted transition hover:text-white"><Icon name="plus" className="size-[18px]" /></button>
+        </div>
       </header>
 
+      {!day ? (
+        <EmptyState text="Esta rutina aún no tiene días." onEdit={onEdit} />
+      ) : (<>
       {/* Day chips */}
       <div className="no-scrollbar -mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-        {DAYS.map((d) => (
+        {routine.days.map((d) => (
           <button key={d.id} onClick={() => setDayId(d.id)}
-            className={`relative shrink-0 rounded-2xl px-4 py-2.5 text-sm transition-all duration-300 ${dayId === d.id ? "text-black" : "bg-white/[0.04] text-muted hover:text-white"}`}
-            style={dayId === d.id ? { background: d.color, boxShadow: `0 8px 24px -8px ${d.color}` } : undefined}>
-            <span className="font-semibold">{d.name}</span>
-            {planned === d.id && <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider ${dayId === d.id ? "bg-black/15" : "bg-white/10"}`}>hoy</span>}
+            className={`relative shrink-0 rounded-2xl px-4 py-2.5 text-sm transition-all duration-300 ${day.id === d.id ? "text-black" : "bg-white/[0.04] text-muted hover:text-white"}`}
+            style={day.id === d.id ? { background: d.color, boxShadow: `0 8px 24px -8px ${d.color}` } : undefined}>
+            <span className="font-semibold">{d.name || "Sin nombre"}</span>
+            {planned === d.id && <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider ${day.id === d.id ? "bg-black/15" : "bg-white/10"}`}>hoy</span>}
           </button>
         ))}
       </div>
@@ -70,12 +99,11 @@ export default function Gym() {
       <section key={day.id} className="card relative mt-4 overflow-hidden p-5 sm:p-7 animate-rise">
         <div className="pointer-events-none absolute -right-20 -top-24 size-72 rounded-full opacity-40 blur-3xl" style={{ background: day.color }} />
         <div className="relative flex items-center gap-5">
-          <div className="flex-1">
-            <p className="num text-xs tracking-[0.3em]" style={{ color: day.color }}>{day.short}</p>
-            <h2 className="mt-1 text-2xl font-semibold sm:text-3xl">{day.name}</h2>
-            <p className="mt-1 text-sm text-muted">{day.focus}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-2xl font-semibold sm:text-3xl">{day.name}</h2>
+            {day.focus && <p className="mt-1 text-sm text-muted">{day.focus}</p>}
             <div className="mt-5 flex gap-6">
-              {[[slots.length, "ejercicios"], [totalSets, "series"], [`~${minutes}`, "min"]].map(([v, l]) => (
+              {[[slots.length, "ejercicios"], [slots.reduce((a, s) => a + s.sets, 0), "series"], [`~${minutes}`, "min"]].map(([v, l]) => (
                 <div key={l as string}><p className="num text-2xl font-light">{v}</p><p className="text-[10px] uppercase tracking-widest text-muted">{l}</p></div>
               ))}
             </div>
@@ -86,18 +114,19 @@ export default function Gym() {
         </div>
         {!logging && (
           <p className="relative mt-4 rounded-xl bg-orange/10 px-3 py-2 text-xs text-orange">
-            Hoy ya registraste {dayById(workout?.dayId)?.name}. Vista solo de consulta.
+            Hoy ya registraste {routine.days.find((d) => d.id === workout?.dayId)?.name ?? "otro día"}. Vista solo de consulta.
           </p>
         )}
       </section>
 
       {/* Exercises */}
-      <ol key={place + day.id} className="mt-5 space-y-3">
+      {slots.length === 0 && <EmptyState text="Este día no tiene ejercicios todavía." onEdit={onEdit} />}
+      <ol key={routine.id + day.id} className="mt-5 space-y-3">
         {slots.map((slot, i) => (
           <ExerciseCard key={slot.id} i={i} slot={slot} day={day} hub={hub} today={today} logging={logging}
             open={open === slot.id} onOpen={() => setOpen(open === slot.id ? null : slot.id)}
             onInfo={() => setInfo(slot)} setRow={setRow}
-            onRest={() => setRest({ end: Date.now() + slot.rest * 1000, total: slot.rest })} />
+            onRest={() => { if (slot.rest > 0) setRest({ end: Date.now() + slot.rest * 1000, total: slot.rest }); }} />
         ))}
       </ol>
 
@@ -108,9 +137,20 @@ export default function Gym() {
         </button>
       )}
 
-      <ExerciseSheet key={info?.id} slot={info} hub={hub} onClose={() => setInfo(null)} />
+      <ExerciseSheet key={info?.id} slot={info} hub={hub} routineId={routine.id} dayId={day.id} onClose={() => setInfo(null)} />
       {rest && <RestTimer rest={rest} color={day.color} onDone={() => setRest(null)} onAdd={() => setRest({ ...rest, end: rest.end + 15000, total: rest.total + 15 })} />}
       <Summary open={summary} onClose={() => setSummary(false)} hub={hub} day={day} today={today} slots={slots} />
+      </>)}
+    </div>
+  );
+}
+
+function EmptyState({ text, onEdit }: { text: string; onEdit: () => void }) {
+  return (
+    <div className="card mt-5 grid place-items-center gap-3 p-10 text-center animate-rise">
+      <Icon name="gym" className="size-8 text-muted" />
+      <p className="text-sm text-muted">{text}</p>
+      <button onClick={onEdit} className="btn-primary rounded-2xl px-5 py-2.5 text-sm">Editar rutina</button>
     </div>
   );
 }
@@ -119,7 +159,7 @@ function ExerciseCard({ i, slot, day, hub, today, logging, open, onOpen, onInfo,
   i: number; slot: Slot; day: Day; hub: State; today: string; logging: boolean; open: boolean;
   onOpen: () => void; onInfo: () => void; setRow: (ex: string, i: number, p: Partial<SetLog>) => void; onRest: () => void;
 }) {
-  const exId = pick(hub, slot), ex = EXERCISES[exId];
+  const exId = slot.ex, ex = getEx(exId, hub.custom);
   const logged = (logging && hub.workouts[today]?.sets[exId]) || [];
   const last = lastSession(hub.workouts, exId, today);
   const prev = previousBest(hub.workouts, exId, today);
@@ -142,7 +182,7 @@ function ExerciseCard({ i, slot, day, hub, today, logging, open, onOpen, onInfo,
               {isPR && <span className="flex shrink-0 items-center gap-1 rounded-full bg-orange/15 px-2 py-0.5 text-[10px] font-semibold text-orange animate-pop"><Icon name="trophy" className="size-3" />PR</span>}
             </span>
             <span className="num mt-0.5 block text-xs text-muted">
-              {slot.sets} × {slot.reps} · RIR {slot.rir} · {fmtRest(slot.rest)}
+              {slot.sets} × {slot.reps}{slot.rir ? ` · RIR ${slot.rir}` : ""}{slot.rest ? ` · ${fmtRest(slot.rest)}` : ""}
             </span>
             {last && <span className="mt-0.5 block truncate text-xs text-muted/80">Última: <span className="num text-white/80">{last.sets[0].w ? `${last.sets[0].w} kg × ${last.sets[0].r}` : `${last.sets[0].r} reps`}</span>{last.sets.length > 1 && ` +${last.sets.length - 1}`}</span>}
           </span>
@@ -242,11 +282,13 @@ function RestTimer({ rest, color, onDone, onAdd }: { rest: { end: number; total:
   );
 }
 
-function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; onClose: () => void }) {
-  const exId = slot ? pick(hub, slot) : "";
+function ExerciseSheet({ slot, hub, routineId, dayId, onClose }: { slot: Slot | null; hub: State; routineId: string; dayId: string; onClose: () => void }) {
+  const exId = slot?.ex ?? "";
   const [view, setView] = useState<string | null>(null);
   const shown = view ?? exId;
-  const ex = EXERCISES[shown];
+  const ex = shown ? getEx(shown, hub.custom) : null;
+  const options = slot ? [slot.ex, ...slot.alts] : [];
+  const use = (o: string) => editRoutine(routineId, (r) => ({ ...r, days: r.days.map((d) => d.id !== dayId ? d : { ...d, slots: d.slots.map((x) => x.id !== slot!.id ? x : { ...x, ex: o, alts: [x.ex, ...x.alts.filter((a) => a !== o)] }) }) }));
   return (
     <Sheet open={!!slot} onClose={onClose} title={ex?.name}>
       {slot && ex && (
@@ -255,7 +297,7 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
             <span className="rounded-full bg-white/5 px-3 py-1 text-muted">{ex.equipment}</span>
             {ex.muscles.map((m, i) => <span key={m} className={`rounded-full px-3 py-1 ${i === 0 ? "bg-pink/15 text-pink" : "bg-white/5 text-muted"}`}>{MUSCLE_LABEL[m]}</span>)}
           </div>
-          <div className="card bg-surface-2 py-4"><MuscleMap muscles={ex.muscles} /></div>
+          {ex.muscles.length > 0 && <div className="card bg-surface-2 py-4"><MuscleMap muscles={ex.muscles} /></div>}
 
           <a href={youtubeUrl(ex)} target="_blank" rel="noreferrer"
             className="flex items-center gap-3 rounded-2xl bg-[#ff0033]/10 p-3.5 text-sm transition hover:bg-[#ff0033]/15">
@@ -264,7 +306,7 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
             <Icon name="external" className="size-4 text-muted" />
           </a>
 
-          <div>
+          {ex.steps.length > 0 && <div>
             <h3 className="mb-3 text-sm font-semibold">Cómo se hace</h3>
             <ol className="space-y-3">
               {ex.steps.map((s, i) => (
@@ -276,7 +318,7 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
             <ul className="mt-4 space-y-1.5">
               {ex.tips.map((t) => <li key={t} className="flex gap-2 text-sm text-muted"><span className="text-cyan">›</span>{t}</li>)}
             </ul>
-          </div>
+          </div>}
 
           {ex.science && (
             <div className="rounded-2xl border border-violet/20 bg-violet/[0.07] p-4 text-sm leading-relaxed">
@@ -284,21 +326,21 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
             </div>
           )}
 
-          <div>
+          {options.length > 1 && <div>
             <h3 className="mb-3 text-sm font-semibold">Alternativas en tu rutina</h3>
             <ul className="space-y-2">
-              {slot.options.map((o) => {
+              {options.map((o) => {
                 const main = o === exId;
                 return (
                   <li key={o} className={`flex items-center gap-3 rounded-2xl p-3 transition ${o === shown ? "bg-white/[0.06]" : "bg-white/[0.02]"}`}>
                     <button onClick={() => setView(o)} className="min-w-0 flex-1 text-left">
-                      <p className="truncate text-sm font-medium">{EXERCISES[o].name}</p>
-                      <p className="truncate text-xs text-muted">{EXERCISES[o].equipment}</p>
+                      <p className="truncate text-sm font-medium">{getEx(o, hub.custom).name}</p>
+                      <p className="truncate text-xs text-muted">{getEx(o, hub.custom).equipment}</p>
                     </button>
                     {main ? (
                       <span className="rounded-full bg-teal/15 px-3 py-1.5 text-xs font-medium text-teal">Principal</span>
                     ) : (
-                      <button onClick={() => update((s) => ({ choices: { ...s.choices, [slot.id]: o } }))}
+                      <button onClick={() => use(o)}
                         className="flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1.5 text-xs transition hover:bg-white/10">
                         <Icon name="swap" className="size-3.5" />Usar
                       </button>
@@ -307,7 +349,7 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
                 );
               })}
             </ul>
-          </div>
+          </div>}
         </div>
       )}
     </Sheet>
@@ -317,7 +359,7 @@ function ExerciseSheet({ slot, hub, onClose }: { slot: Slot | null; hub: State; 
 function Summary({ open, onClose, hub, day, today, slots }: { open: boolean; onClose: () => void; hub: State; day: Day; today: string; slots: Slot[] }) {
   const w = hub.workouts[today];
   if (!w) return null;
-  const exIds = slots.map((s) => pick(hub, s));
+  const exIds = slots.map((s) => s.ex);
   const vol = exIds.reduce((a, id) => a + volume(w.sets[id]), 0);
   const sets = exIds.reduce((a, id) => a + (w.sets[id]?.filter((s) => s.done).length ?? 0), 0);
   const prs = exIds.filter((id) => { const p = previousBest(hub.workouts, id, today); return p > 0 && Math.max(0, ...(w.sets[id] ?? []).filter((s) => s.done).map((s) => e1rm(s.w, s.r))) > p; });
@@ -342,24 +384,10 @@ function Summary({ open, onClose, hub, day, today, slots }: { open: boolean; onC
         </div>
         {prs.length > 0 && (
           <ul className="space-y-2">
-            {prs.map((id) => <li key={id} className="flex items-center gap-2 text-sm"><Icon name="trophy" className="size-4 text-orange" />{EXERCISES[id].name}</li>)}
+            {prs.map((id) => <li key={id} className="flex items-center gap-2 text-sm"><Icon name="trophy" className="size-4 text-orange" />{getEx(id, hub.custom).name}</li>)}
           </ul>
         )}
       </div>
     </Sheet>
-  );
-}
-
-function PlaceToggle({ place }: { place: Place }) {
-  const opts: [Place, string][] = [["gym", "Gimnasio"], ["home", "Casa"]];
-  return (
-    <div className="relative flex rounded-2xl bg-surface-2 p-1 text-sm" role="tablist" aria-label="Dónde entrenas">
-      <span aria-hidden className="seg-on absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl"
-        style={{ transform: `translateX(${place === "home" ? 100 : 0}%)`, transition: "transform .45s cubic-bezier(.34,1.4,.5,1)" }} />
-      {opts.map(([v, l]) => (
-        <button key={v} role="tab" aria-selected={place === v} onClick={() => update(() => ({ place: v }))}
-          className={`relative z-10 w-20 rounded-xl py-2 transition-colors duration-300 sm:w-24 ${place === v ? "text-white" : "text-muted"}`}>{l}</button>
-      ))}
-    </div>
   );
 }

@@ -37,4 +37,14 @@ const ws: Record<string, Workout> = {
 };
 assert.equal(previousBest(ws, "x", "2026-11-05"), e1rm(100, 5));
 
+// legacy routine migration keeps the user's chosen exercises and week plan
+const { migrateLegacy, TEMPLATES, fromTemplate } = await import("./routine.ts");
+const m = migrateLegacy({ plan: [null, "push", null, null, null, null, null], choices: { "push-1": "press-banca" }, place: "home" });
+assert.equal(m.activeRoutine, "r-home");
+assert.equal(m.routines![0].days[0].slots[0].ex, "press-banca");
+assert.ok(m.routines![0].days[0].slots[0].alts.includes("press-inclinado-mancuernas"));
+assert.equal(m.routines![1].plan[1], "push");
+assert.deepEqual(migrateLegacy({}), {}); // new users start from zero
+assert.equal(fromTemplate(TEMPLATES.find((t) => t.id === "custom")!).days.length, 0);
+
 console.log("logic ok");

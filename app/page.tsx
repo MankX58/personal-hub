@@ -5,15 +5,16 @@ import { Icon } from "@/components/icons";
 import { Ring, Sheet, Burst, Collapse, stagger } from "@/components/ui";
 import { update, useHub, useToday, uid, type State } from "@/lib/store";
 import { addDays, byTime, hasWork, parseKey, type Task } from "@/lib/logic";
-import { dayById } from "@/lib/routine";
+import { getRoutine } from "@/lib/routine";
 
 type Item = (Task & { gym?: false }) | { gym: true; id: string; title: string; sub: string; time?: string; done: boolean; color: string };
 
 function gymItem(hub: State, date: string): Item | null {
   const wd = parseKey(date).getDay();
-  const day = dayById(hub.plan[wd]);
+  const r = getRoutine(hub);
+  const day = r?.days.find((d) => d.id === r.plan[wd]);
   if (!day) return null;
-  return { gym: true, id: `gym-${date}`, title: `Entreno · ${day.name}${hub.place === "home" ? " · Casa" : ""}`, sub: day.focus, time: hub.gymTimes[wd] || undefined, done: !!hub.workouts[date]?.done, color: day.color };
+  return { gym: true, id: `gym-${date}`, title: `Entreno · ${day.name}`, sub: day.focus ?? `${day.slots.length} ejercicios`, time: hub.gymTimes[wd] || undefined, done: !!hub.workouts[date]?.done, color: day.color };
 }
 
 /** Gym without time goes first; then timed items; then untimed tasks */
@@ -51,7 +52,8 @@ export default function Today() {
   const toggle = (it: Item) => {
     if (it.gym) {
       update((s) => {
-        const w = s.workouts[today] ?? { dayId: s.plan[parseKey(today).getDay()]!, done: false, sets: {} };
+        const r = getRoutine(s);
+        const w = s.workouts[today] ?? { dayId: r?.plan[parseKey(today).getDay()] ?? "", done: false, sets: {} };
         return { workouts: { ...s.workouts, [today]: { ...w, done: !it.done } } };
       });
     } else update((s) => ({ tasks: s.tasks.map((t) => (t.id === it.id ? { ...t, done: !t.done } : t)) }));
@@ -270,7 +272,8 @@ function GymCard({ hub, today }: { hub: State; today: string }) {
       </div>
       <div className="mt-4 grid grid-cols-7 gap-1.5">
         {days.map((d) => {
-          const day = dayById(hub.plan[parseKey(d).getDay()]);
+          const r = getRoutine(hub);
+          const day = r?.days.find((x) => x.id === r.plan[parseKey(d).getDay()]);
           const did = hasWork(hub.workouts[d]);
           const isToday = d === today;
           return (
@@ -278,7 +281,7 @@ function GymCard({ hub, today }: { hub: State; today: string }) {
               <span className={`text-[10px] uppercase ${isToday ? "text-white" : "text-muted"}`}>{parseKey(d).toLocaleDateString("es", { weekday: "narrow" })}</span>
               <span className={`grid aspect-square w-full place-items-center rounded-xl text-[9px] font-semibold transition ${isToday ? "ring-1 ring-white/30" : ""}`}
                 style={{ background: did ? day?.color ?? "#2dd4bf" : day ? `${day.color}1f` : "rgb(255 255 255 / .03)", color: did ? "#000" : day?.color }}>
-                {did ? <Icon name="check" className="size-3.5" stroke={3} /> : day?.short.slice(0, 2) ?? ""}
+                {did ? <Icon name="check" className="size-3.5" stroke={3} /> : day?.name.slice(0, 2).toUpperCase() ?? ""}
               </span>
             </div>
           );
