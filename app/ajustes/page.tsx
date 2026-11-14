@@ -114,6 +114,7 @@ function Group({ title, delay = 0, children }: { title: string; delay?: number; 
 function Account() {
   const { data } = authClient.useSession();
   const [busy, setBusy] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
   const user = data?.user;
   const logout = async () => {
     setBusy(true);
@@ -127,9 +128,9 @@ function Account() {
   };
   return (
     <section className="card animate-rise p-5 text-center lg:sticky lg:top-10">
-      {user?.image
+      {user?.image && !imgFailed
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={user.image} alt="" referrerPolicy="no-referrer" className="mx-auto size-16 rounded-2xl object-cover" />
+        ? <img src={user.image} alt="" referrerPolicy="no-referrer" onError={() => setImgFailed(true)} className="mx-auto size-16 rounded-2xl object-cover" />
         : <span className="grad mx-auto grid size-16 place-items-center rounded-2xl text-2xl font-semibold">{(user?.name || user?.email || "?")[0].toUpperCase()}</span>}
       <p className="mt-3 truncate font-semibold">{user?.name || "Tu cuenta"}</p>
       <p className="truncate text-xs text-muted">{user?.email ?? "…"}</p>
