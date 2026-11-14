@@ -69,13 +69,17 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         </nav>
       </aside>
 
-      <main className="pb-nav mx-auto w-full max-w-6xl px-4 pt-[max(1.25rem,env(safe-area-inset-top))] sm:px-6 lg:px-10 lg:pt-10">
+      <main className="pb-nav mx-auto w-full max-w-6xl px-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 lg:px-10 lg:pt-10">
         {/* Móvil / tablet: marca + selector de apps */}
-        <div className="mb-5 flex items-center gap-3 lg:hidden">
+        {/* Header móvil común a las 3 apps: marca a la izquierda, selector de apps fijo en el borde derecho (120×42) */}
+        <header className="mb-5 flex h-[42px] items-center gap-3 lg:hidden">
           <Logo className="size-9" />
-          <span className="flex-1 font-semibold">Mi Espacio</span>
-          <AppSwitcher className="w-32" />
-        </div>
+          <div className="min-w-0 flex-1 leading-tight">
+            <p className="truncate text-[15px] font-semibold">Mi Espacio</p>
+            <p className="truncate text-xs text-muted">Tareas y entreno</p>
+          </div>
+          <AppSwitcher className="w-[7.5rem] shrink-0" />
+        </header>
         {hub ? children : <div className="grid h-[60dvh] place-items-center"><div className="grad size-10 animate-glow rounded-2xl" /></div>}
       </main>
 
