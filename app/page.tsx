@@ -176,7 +176,7 @@ function NowLine({ now }: { now: string }) {
     <div className="my-2 flex items-center gap-2 px-1" aria-label="Ahora">
       <span className="num text-[11px] text-pink">{now}</span>
       <span className="relative h-px flex-1 bg-gradient-to-r from-pink to-transparent">
-        <span className="absolute -left-1 -top-[3px] size-[7px] animate-glow rounded-full bg-pink" />
+        <span className="absolute -left-1 -top-[3px] size-[7px] rounded-full bg-pink" />
       </span>
     </div>
   );
@@ -203,7 +203,7 @@ function Row({ it, i, late, preview, onToggle, onDelete, onMove, moveLabel }:
           aria-label={it.done ? "Marcar pendiente" : "Completar"}
           className={`relative grid size-8 shrink-0 place-items-center rounded-xl border transition-all duration-300 ${it.done ? "border-transparent bg-teal text-black" : late ? "border-orange/50" : "border-white/15 hover:border-white/40"}`}>
           {it.done && <Icon name="check" className="size-4 animate-pop" stroke={3} />}
-          {burst && <Burst color="#2dd4bf" />}
+          {burst && <Burst color="#82c1ae" />}
         </button>
       )}
       {it.gym && <span className="grid size-8 shrink-0 place-items-center rounded-xl" style={{ background: `${it.color}22`, color: it.color }}><Icon name="gym" className="size-4" /></span>}
@@ -275,7 +275,7 @@ function GymCard({ hub, today }: { hub: State; today: string }) {
             <div key={d} className="flex flex-col items-center gap-1.5">
               <span className={`text-[10px] uppercase ${isToday ? "text-white" : "text-muted"}`}>{parseKey(d).toLocaleDateString("es", { weekday: "narrow" })}</span>
               <span className={`grid aspect-square w-full place-items-center rounded-xl text-[9px] font-semibold transition ${isToday ? "ring-1 ring-white/30" : ""}`}
-                style={{ background: did ? day?.color ?? "#2dd4bf" : day ? `${day.color}1f` : "rgb(255 255 255 / .03)", color: did ? "#000" : day?.color }}>
+                style={{ background: did ? day?.color ?? "#82c1ae" : day ? `${day.color}1f` : "rgb(255 255 255 / .03)", color: did ? "#000" : day?.color }}>
                 {did ? <Icon name="check" className="size-3.5" stroke={3} /> : day?.name.slice(0, 2).toUpperCase() ?? ""}
               </span>
             </div>

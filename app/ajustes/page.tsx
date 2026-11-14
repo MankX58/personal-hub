@@ -31,17 +31,20 @@ export default function Settings() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <header className="animate-rise">
-        <p className="text-sm text-muted">Personaliza tu hub</p>
-        <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Ajustes</h1>
+    <div className="mx-auto max-w-4xl">
+      <header className="mb-6 animate-rise lg:mb-8">
+        <h1 className="text-xl font-semibold tracking-tight sm:text-2xl lg:text-3xl">Ajustes</h1>
+        <p className="text-xs text-muted sm:text-sm">Personaliza tu hub y administra tu cuenta</p>
       </header>
 
+      <div className="grid gap-6 lg:grid-cols-[17rem_1fr] lg:items-start">
       <Account />
 
-      <section className="card relative z-10 p-5 sm:p-6 animate-rise">
-        <h2 className="font-semibold">Semana de entreno</h2>
-        <p className="mt-1 text-xs text-muted">
+      <div className="space-y-6">
+      <Group title="Entreno">
+      <section className="relative z-10 p-4 sm:p-5">
+        <h2 className="text-sm font-medium">Semana de entreno</h2>
+        <p className="mt-0.5 text-xs text-muted">
           {routine ? <>Rutina activa: <b className="font-medium text-white">{routine.name}</b>. </> : null}
           Elige qué día toca cada día y, si quieres, a qué hora. Sin hora, el entreno aparece el primero en tus tareas.
         </p>
@@ -61,10 +64,12 @@ export default function Settings() {
           })}
         </ul>
       </section>
+      </Group>
 
-      <section className="card p-5 sm:p-6 animate-rise [animation-delay:60ms]">
-        <h2 className="font-semibold">Al cambiar de día</h2>
-        <p className="mt-1 text-xs text-muted">Qué pasa con las tareas del día anterior.</p>
+      <Group title="Tareas" delay={60}>
+      <section className="p-4 sm:p-5">
+        <h2 className="text-sm font-medium">Al cambiar de día</h2>
+        <p className="mt-0.5 text-xs text-muted">Qué pasa con las tareas del día anterior.</p>
         <div className="mt-4 flex rounded-[0.9rem] bg-surface-2 p-1">
           {([["archive", "Archivar"], ["delete", "Borrar"]] as const).map(([v, l]) => (
             <button key={v} onClick={() => update(() => ({ rolloverMode: v }))}
@@ -76,11 +81,12 @@ export default function Settings() {
             className="mt-3 text-xs text-muted underline-offset-4 hover:text-pink hover:underline">Vaciar historial ({hub.archive.length})</button>
         )}
       </section>
+      </Group>
 
-
-      <section className="card p-5 sm:p-6 animate-rise [animation-delay:180ms]">
-        <h2 className="font-semibold">Tus datos</h2>
-        <p className="mt-1 text-xs text-muted">Se guardan en tu cuenta y se sincronizan entre dispositivos. También puedes exportar una copia.</p>
+      <Group title="Datos" delay={120}>
+      <section className="p-4 sm:p-5">
+        <h2 className="text-sm font-medium">Tus datos</h2>
+        <p className="mt-0.5 text-xs text-muted">Se guardan en tu cuenta y se sincronizan entre dispositivos. También puedes exportar una copia.</p>
         <div className="mt-4 flex gap-2">
           <button onClick={download} className="flex-1 rounded-xl bg-white/5 py-3 text-sm transition hover:bg-white/10">Exportar</button>
           <button onClick={() => file.current?.click()} className="flex-1 rounded-xl bg-white/5 py-3 text-sm transition hover:bg-white/10">Importar</button>
@@ -88,7 +94,20 @@ export default function Settings() {
         </div>
         {msg && <p className="mt-3 text-xs text-teal animate-fade">{msg}</p>}
       </section>
+      </Group>
+      </div>
+      </div>
     </div>
+  );
+}
+
+/** Mismo formato que los grupos de Ajustes en Mi semestre: etiqueta pequeña + tarjeta. */
+function Group({ title, delay = 0, children }: { title: string; delay?: number; children: React.ReactNode }) {
+  return (
+    <section className="animate-rise" style={{ animationDelay: `${delay}ms` }}>
+      <h2 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">{title}</h2>
+      <div className="card divide-y divide-line overflow-hidden">{children}</div>
+    </section>
   );
 }
 
@@ -107,17 +126,15 @@ function Account() {
     }
   };
   return (
-    <section className="card flex items-center gap-4 p-5 sm:p-6 animate-rise">
+    <section className="card animate-rise p-5 text-center lg:sticky lg:top-10">
       {user?.image
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={user.image} alt="" referrerPolicy="no-referrer" className="size-12 rounded-2xl object-cover" />
-        : <span className="grid size-12 place-items-center rounded-2xl bg-white/[0.06] text-lg font-semibold">{(user?.name || user?.email || "?")[0].toUpperCase()}</span>}
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-medium">{user?.name || "Tu cuenta"}</p>
-        <p className="truncate text-xs text-muted">{user?.email ?? "…"}</p>
-      </div>
+        ? <img src={user.image} alt="" referrerPolicy="no-referrer" className="mx-auto size-16 rounded-2xl object-cover" />
+        : <span className="grad mx-auto grid size-16 place-items-center rounded-2xl text-2xl font-semibold">{(user?.name || user?.email || "?")[0].toUpperCase()}</span>}
+      <p className="mt-3 truncate font-semibold">{user?.name || "Tu cuenta"}</p>
+      <p className="truncate text-xs text-muted">{user?.email ?? "…"}</p>
       <button onClick={logout} disabled={busy}
-        className="flex shrink-0 items-center gap-2 rounded-xl bg-white/[0.05] px-4 py-2.5 text-sm transition hover:bg-pink/10 hover:text-pink disabled:opacity-50">
+        className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm font-medium transition hover:border-red-400/40 hover:bg-red-400/10 hover:text-red-300 active:scale-[0.97] disabled:opacity-60">
         <Icon name="logout" className="size-4" />{busy ? "Saliendo…" : "Cerrar sesión"}
       </button>
     </section>

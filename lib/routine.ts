@@ -5,7 +5,14 @@ export type Day = { id: string; name: string; focus?: string; color: string; slo
 export type Routine = { id: string; name: string; days: Day[]; plan: (string | null)[] }; // plan index = Date.getDay()
 
 export const WEEKDAYS = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-export const COLORS = ["#ff4d8d", "#22d3ee", "#a78bfa", "#fb923c", "#2dd4bf", "#facc15", "#60a5fa"];
+export const COLORS = ["#df9aa7", "#87b2c6", "#aaa3d8", "#d9a574", "#82c1ae", "#d6c172", "#8aaed8"];
+// Colores vivos de versiones anteriores → su equivalente sobrio (rutinas ya guardadas).
+const SOFTER: Record<string, string> = {
+  "#ff4d8d": "#df9aa7", "#22d3ee": "#87b2c6", "#a78bfa": "#aaa3d8", "#fb923c": "#d9a574",
+  "#2dd4bf": "#82c1ae", "#facc15": "#d6c172", "#60a5fa": "#8aaed8",
+};
+export const soften = (routines: Routine[]) =>
+  routines.map((r) => ({ ...r, days: r.days.map((d) => ({ ...d, color: SOFTER[d.color?.toLowerCase()] ?? d.color })) }));
 export const EMPTY_PLAN: (string | null)[] = [null, null, null, null, null, null, null];
 
 export const newId = () => Math.random().toString(36).slice(2, 10);
@@ -22,7 +29,7 @@ const s = (id: string, options: string[], sets: number, reps: string, rir = "1�
 
 // Evidence-based picks: ~10–20 series/músculo/semana, 0–2 RIR, énfasis en posiciones estiradas.
 const PUSH: TDay = {
-  id: "push", name: "Empuje", focus: "Pecho · Hombro · Tríceps", color: "#ff4d8d",
+  id: "push", name: "Empuje", focus: "Pecho · Hombro · Tríceps", color: "#df9aa7",
   slots: [
     s("push-1", ["press-inclinado-mancuernas", "press-inclinado-smith", "press-banca", "press-maquina"], 3, "6–10", "1–2", 150),
     s("push-2", ["press-maquina", "press-banca", "fondos", "press-inclinado-smith"], 3, "8–12", "1"),
@@ -34,7 +41,7 @@ const PUSH: TDay = {
   ],
 };
 const PULL: TDay = {
-  id: "pull", name: "Tirón", focus: "Espalda · Bíceps · Deltoide post.", color: "#22d3ee",
+  id: "pull", name: "Tirón", focus: "Espalda · Bíceps · Deltoide post.", color: "#87b2c6",
   slots: [
     s("pull-1", ["jalon-pecho", "dominadas", "jalon-neutro"], 3, "8–12", "1–2", 150),
     s("pull-2", ["remo-pecho-apoyado", "remo-polea", "remo-barra"], 3, "8–12", "1"),
@@ -46,7 +53,7 @@ const PULL: TDay = {
   ],
 };
 const LEGS: TDay = {
-  id: "legs", name: "Pierna A", focus: "Cuádriceps · Isquios · Gemelos", color: "#a78bfa",
+  id: "legs", name: "Pierna A", focus: "Cuádriceps · Isquios · Gemelos", color: "#aaa3d8",
   slots: [
     s("legs-1", ["sentadilla", "hack-squat", "prensa"], 3, "5–8", "1–2", 180),
     s("legs-2", ["peso-muerto-rumano", "hip-thrust"], 3, "6–10", "1–2", 150),
@@ -57,7 +64,7 @@ const LEGS: TDay = {
   ],
 };
 const UPPER: TDay = {
-  id: "upper", name: "Torso", focus: "Fuerza en torso completo", color: "#fb923c",
+  id: "upper", name: "Torso", focus: "Fuerza en torso completo", color: "#d9a574",
   slots: [
     s("upper-1", ["press-banca", "press-maquina", "press-inclinado-smith"], 3, "5–8", "1–2", 180),
     s("upper-2", ["remo-barra", "remo-pecho-apoyado", "remo-polea"], 3, "6–10", "1–2", 150),
@@ -69,7 +76,7 @@ const UPPER: TDay = {
   ],
 };
 const LOWER: TDay = {
-  id: "lower", name: "Pierna B", focus: "Glúteo · Isquios · Cuádriceps", color: "#2dd4bf",
+  id: "lower", name: "Pierna B", focus: "Glúteo · Isquios · Cuádriceps", color: "#82c1ae",
   slots: [
     s("lower-1", ["hack-squat", "prensa", "sentadilla"], 3, "8–12", "1–2", 150),
     s("lower-2", ["sentadilla-bulgara", "prensa"], 2, "8–12", "1–2", 120),
@@ -80,7 +87,7 @@ const LOWER: TDay = {
   ],
 };
 const FULL: TDay = {
-  id: "full", name: "Full Body", focus: "Cuerpo completo", color: "#60a5fa",
+  id: "full", name: "Full Body", focus: "Cuerpo completo", color: "#8aaed8",
   slots: [
     s("full-1", ["sentadilla", "hack-squat", "prensa"], 3, "6–10", "1–2", 150),
     s("full-2", ["press-banca", "press-inclinado-mancuernas", "press-maquina"], 3, "6–10", "1–2", 150),
@@ -92,7 +99,7 @@ const FULL: TDay = {
   ],
 };
 const CHEST_BACK: TDay = {
-  id: "chest-back", name: "Pecho y espalda", focus: "Pecho · Dorsal · Espalda alta", color: "#ff4d8d",
+  id: "chest-back", name: "Pecho y espalda", focus: "Pecho · Dorsal · Espalda alta", color: "#df9aa7",
   slots: [
     s("cb-1", ["press-inclinado-mancuernas", "press-banca", "press-inclinado-smith"], 3, "6–10", "1–2", 150),
     s("cb-2", ["jalon-pecho", "dominadas"], 3, "8–12", "1–2", 150),
@@ -103,7 +110,7 @@ const CHEST_BACK: TDay = {
   ],
 };
 const SHOULDERS_ARMS: TDay = {
-  id: "shoulders-arms", name: "Hombro y brazo", focus: "Deltoides · Bíceps · Tríceps", color: "#fb923c",
+  id: "shoulders-arms", name: "Hombro y brazo", focus: "Deltoides · Bíceps · Tríceps", color: "#d9a574",
   slots: [
     s("sa-1", ["press-militar-mancuernas", "press-hombro-maquina"], 3, "8–12", "1–2"),
     s("sa-2", ["elevaciones-laterales-polea", "elevaciones-laterales-mancuerna"], 4, "12–20", "0–1", 75),

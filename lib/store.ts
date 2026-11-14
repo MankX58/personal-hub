@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useSyncExternalStore } from "react";
 import { dateKey, rollover, type Task, type Workout } from "./logic";
-import { migrateLegacy, type Routine } from "./routine";
+import { migrateLegacy, soften, type Routine } from "./routine";
 import type { CustomEx } from "./exercises";
 
 export type State = {
@@ -33,6 +33,7 @@ export function migrate(raw: Legacy): State {
   const { plan, choices, place, ...rest } = raw;
   const s: State = { ...DEFAULTS, ...rest };
   if (!raw.routines) Object.assign(s, migrateLegacy({ plan, choices, place }));
+  s.routines = soften(s.routines);
   return s;
 }
 

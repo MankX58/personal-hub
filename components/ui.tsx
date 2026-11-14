@@ -22,7 +22,7 @@ export function CountUp({ value, decimals = 0, className = "" }: { value: number
   return <span className={`num ${className}`}>{(Math.round(v * 10 ** decimals) / 10 ** decimals || 0).toLocaleString("es", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}</span>;
 }
 
-export function Ring({ value, size = 120, stroke = 10, colors = ["#ff4d8d", "#8b5cf6"], children }:
+export function Ring({ value, size = 120, stroke = 10, colors = ["#df9aa7", "#8e8e9a"], children }:
   { value: number; size?: number; stroke?: number; colors?: [string, string] | string[]; children?: React.ReactNode }) {
   const id = useId(), r = (size - stroke) / 2, c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, value));
@@ -37,7 +37,7 @@ export function Ring({ value, size = 120, stroke = 10, colors = ["#ff4d8d", "#8b
         <circle cx={size / 2} cy={size / 2} r={r} stroke="rgb(255 255 255 / 0.06)" strokeWidth={stroke} fill="none" />
         <circle cx={size / 2} cy={size / 2} r={r} stroke={`url(#${id})`} strokeWidth={stroke} fill="none" strokeLinecap="round"
           strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
-          style={{ transition: "stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)", filter: `drop-shadow(0 0 6px ${colors[0]}66)` }} />
+          style={{ transition: "stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1)" }} />
       </svg>
       <div className="absolute inset-0 grid place-items-center text-center">{children}</div>
     </div>
@@ -45,7 +45,7 @@ export function Ring({ value, size = 120, stroke = 10, colors = ["#ff4d8d", "#8b
 }
 
 /** Smooth area chart. Pass ≥1 values. */
-export function AreaChart({ values, color = "#8b5cf6", height = 140, labels }: { values: number[]; color?: string; height?: number; labels?: string[] }) {
+export function AreaChart({ values, color = "#8e8e9a", height = 140, labels }: { values: number[]; color?: string; height?: number; labels?: string[] }) {
   const id = useId();
   const W = 320, H = 100, pad = 6;
   if (!values.length) return null;
@@ -70,7 +70,7 @@ export function AreaChart({ values, color = "#8b5cf6", height = 140, labels }: {
         {[0.25, 0.5, 0.75].map((g) => <line key={g} x1="0" x2={W} y1={H * g} y2={H * g} stroke="rgb(255 255 255 / .05)" vectorEffect="non-scaling-stroke" />)}
         <path d={`${d} L${last[0]},${H} L${xy[0][0]},${H} Z`} fill={`url(#${id})`} className="animate-fade" />
         <path d={d} fill="none" stroke={color} strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round"
-          pathLength={1000} strokeDasharray={1000} style={{ animation: "draw 1.2s cubic-bezier(.2,.8,.2,1) both", filter: `drop-shadow(0 4px 10px ${color}88)` }} />
+          pathLength={1000} strokeDasharray={1000} style={{ animation: "draw 1.2s cubic-bezier(.2,.8,.2,1) both" }} />
       </svg>
       {labels && (
         <div className="mt-2 flex justify-between text-[10px] text-muted">
@@ -81,7 +81,7 @@ export function AreaChart({ values, color = "#8b5cf6", height = 140, labels }: {
   );
 }
 
-export function Bars({ values, labels, color = "#22d3ee", highlightLast = true }: { values: number[]; labels: string[]; color?: string; highlightLast?: boolean }) {
+export function Bars({ values, labels, color = "#87b2c6", highlightLast = true }: { values: number[]; labels: string[]; color?: string; highlightLast?: boolean }) {
   const max = Math.max(1, ...values);
   return (
     <div className="flex h-36 items-end gap-1.5 sm:gap-2.5">
@@ -94,7 +94,6 @@ export function Bars({ values, labels, color = "#22d3ee", highlightLast = true }
                 style={{
                   height: `${Math.max(3, (v / max) * 100)}%`,
                   background: last ? `linear-gradient(180deg, ${color}, ${color}55)` : "rgb(255 255 255 / .08)",
-                  boxShadow: last ? `0 0 20px ${color}55` : undefined,
                   animation: `grow .8s ${i * 50}ms cubic-bezier(.2,.8,.2,1) both`,
                 }} />
             </div>
@@ -116,8 +115,7 @@ export function Heatmap({ cells }: { cells: { date: string; v: number; planned: 
             <div key={c.date} title={c.date}
               className="size-3.5 rounded-[4px] sm:size-4"
               style={{
-                background: c.v > 0 ? `rgb(255 77 141 / ${0.25 + Math.min(1, c.v) * 0.75})` : c.planned ? "rgb(255 255 255 / .09)" : "rgb(255 255 255 / .03)",
-                boxShadow: c.v >= 1 ? "0 0 8px rgb(255 77 141 / .5)" : undefined,
+                background: c.v > 0 ? `rgb(223 154 167 / ${0.25 + Math.min(1, c.v) * 0.75})` : c.planned ? "rgb(255 255 255 / .09)" : "rgb(255 255 255 / .03)",
                 animation: `fade .4s ${i * 25}ms both`,
               }} />
           ))}
@@ -155,13 +153,13 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
 }
 
 /** Little particle burst for PRs / completions */
-export function Burst({ color = "#fb923c" }: { color?: string }) {
+export function Burst({ color = "#d9a574" }: { color?: string }) {
   return (
     <span className="pointer-events-none absolute inset-0 grid place-items-center">
       {Array.from({ length: 10 }, (_, i) => {
         const a = (i / 10) * Math.PI * 2;
         return <span key={i} className="absolute size-1.5 rounded-full"
-          style={{ background: i % 2 ? color : "#ff4d8d", ["--x" as string]: `${Math.cos(a) * 34}px`, ["--y" as string]: `${Math.sin(a) * 34}px`, animation: "burst .7s ease-out both" }} />;
+          style={{ background: i % 2 ? color : "#df9aa7", ["--x" as string]: `${Math.cos(a) * 34}px`, ["--y" as string]: `${Math.sin(a) * 34}px`, animation: "burst .7s ease-out both" }} />;
       })}
     </span>
   );
@@ -251,7 +249,7 @@ function Figure({ shapes, active, primary, label }: { shapes: Shape[]; active: S
     <figure className="flex flex-col items-center gap-1">
       <svg viewBox="0 0 100 190" className="h-52 w-auto">
         <defs>
-          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ff4d8d" /><stop offset="1" stopColor="#8b5cf6" /></linearGradient>
+          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#df9aa7" /><stop offset="1" stopColor="#8e8e9a" /></linearGradient>
         </defs>
         {/* silhouette */}
         <g fill="rgb(255 255 255 / .04)" stroke="rgb(255 255 255 / .08)" strokeWidth=".6">
@@ -262,8 +260,7 @@ function Figure({ shapes, active, primary, label }: { shapes: Shape[]; active: S
           const on = active.has(s.m);
           return <path key={i} d={s.d} fill={on ? `url(#${id})` : "rgb(255 255 255 / .06)"}
             opacity={on ? (s.m === primary ? 1 : 0.55) : 1}
-            className={on && s.m === primary ? "animate-glow" : ""}
-            style={on ? { filter: "drop-shadow(0 0 4px rgb(255 77 141 / .7))" } : undefined} />;
+            />;
         })}
       </svg>
       <figcaption className="text-[10px] uppercase tracking-widest text-muted">{label}</figcaption>

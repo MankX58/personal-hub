@@ -89,7 +89,7 @@ export default function Progress() {
         <div className="card p-5 animate-rise [animation-delay:60ms]">
           <p className="text-[11px] uppercase tracking-widest text-muted">Semana</p>
           <div className="mt-2 flex items-center gap-3">
-            <Ring value={sessionsWeek / plannedPerWeek} size={64} stroke={6} colors={["#22d3ee", "#8b5cf6"]}>
+            <Ring value={sessionsWeek / plannedPerWeek} size={64} stroke={6} colors={["#87b2c6", "#8e8e9a"]}>
               <p className="num text-base font-semibold">{sessionsWeek}<span className="text-muted">/{plannedPerWeek}</span></p>
             </Ring>
             <p className="text-xs text-muted">sesiones</p>
@@ -125,7 +125,7 @@ export default function Progress() {
                   <p className={`num flex items-center text-2xl ${gain >= 0 ? "text-teal" : "text-pink"}`}><Icon name={gain >= 0 ? "up" : "down"} className="size-5" stroke={2.5} />{gain >= 0 ? "+" : ""}<CountUp value={gain} decimals={1} />%</p></div>
                 <div><p className="text-[10px] uppercase tracking-widest text-muted">Mejor serie</p><p className="num text-lg">{lastP.top.w ? `${lastP.top.w} kg × ${lastP.top.r}` : `${lastP.top.r} reps`}</p></div>
               </div>
-              <div className="mt-6" key={exId}><AreaChart values={hist.map((h) => h.e1rm)} labels={hist.map((h) => short(h.date))} color="#ff4d8d" height={170} /></div>
+              <div className="mt-6" key={exId}><AreaChart values={hist.map((h) => h.e1rm)} labels={hist.map((h) => short(h.date))} color="#df9aa7" height={170} /></div>
               {best === lastP.e1rm && hist.length > 1 && <p className="mt-3 flex items-center gap-2 text-xs text-orange"><Icon name="trophy" className="size-4" />Estás en tu mejor marca</p>}
             </>
           ) : <Empty />}
@@ -147,7 +147,7 @@ export default function Progress() {
           <ul className="mt-5 space-y-3">
             {tracked.map((m, i) => {
               const v = muscleSets[m] ?? 0, pct = Math.min(100, (v / 20) * 100);
-              const color = v >= 10 ? "#2dd4bf" : v >= 5 ? "#22d3ee" : "#8b5cf6";
+              const color = v >= 10 ? "#82c1ae" : v >= 5 ? "#87b2c6" : "#8e8e9a";
               return (
                 <li key={m} className="grid grid-cols-[6.5rem_1fr_2.5rem] items-center gap-3 text-sm">
                   <span className="truncate text-muted">{MUSCLE_LABEL[m]}</span>

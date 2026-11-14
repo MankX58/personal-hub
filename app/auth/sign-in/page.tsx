@@ -61,13 +61,6 @@ export default function SignIn() {
 
   return (
     <div className="relative grid min-h-dvh overflow-hidden lg:grid-cols-[1.1fr_1fr]">
-      {/* ambient orbs */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className="absolute -left-32 -top-32 size-[28rem] rounded-full bg-pink/20 blur-[110px] animate-glow" />
-        <div className="absolute -bottom-40 right-0 size-[32rem] rounded-full bg-violet/20 blur-[120px] animate-glow [animation-delay:1.2s]" />
-        <div className="absolute left-1/3 top-1/2 size-72 rounded-full bg-cyan/10 blur-[100px]" />
-      </div>
-
       {/* Showcase (desktop) */}
       <section className="relative hidden flex-col justify-between p-12 lg:flex">
         <Brand />
@@ -87,7 +80,7 @@ export default function SignIn() {
             </div>
             <div className="card col-span-2 flex h-28 items-end gap-2 p-5 animate-rise [animation-delay:280ms]">
               {[30, 45, 38, 60, 52, 70, 64, 88].map((h, i) => (
-                <span key={i} className="flex-1 origin-bottom rounded-md" style={{ height: `${h}%`, background: i === 7 ? "#22d3ee" : "rgb(255 255 255 / .08)", boxShadow: i === 7 ? "0 0 18px #22d3ee66" : undefined, animation: `grow .8s ${400 + i * 60}ms cubic-bezier(.2,.8,.2,1) both` }} />
+                <span key={i} className="flex-1 origin-bottom rounded-md" style={{ height: `${h}%`, background: i === 7 ? "#87b2c6" : "rgb(255 255 255 / .08)", boxShadow: i === 7 ? "0 0 18px #87b2c666" : undefined, animation: `grow .8s ${400 + i * 60}ms cubic-bezier(.2,.8,.2,1) both` }} />
               ))}
             </div>
           </div>

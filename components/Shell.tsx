@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Icon, Logo, type IconName } from "./icons";
 import { AppSwitcher } from "./AppSwitcher";
 import { useEffect } from "react";
@@ -16,6 +16,7 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const router = useRouter();
   const hub = useHub();
   const userId = authClient.useSession().data?.user?.id; // proxy.ts already guarantees a session on app pages
   useToday(); // keeps the day rollover running on every screen
@@ -23,6 +24,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const active = (href: string) => (href === "/" ? path === "/" : path.startsWith(href));
   const idx = Math.max(0, NAV.findIndex((n) => active(n.href)));
   const spring = "cubic-bezier(.34,1.4,.5,1)";
+
+  // Atajos de teclado en escritorio: 1–4 cambian de sección (igual que Mi semestre)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey || el?.closest("input, textarea, select, [contenteditable], [role=dialog]")) return;
+      const item = NAV[Number(e.key) - 1];
+      if (item) router.push(item.href);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router]);
 
   if (path.startsWith("/auth")) return <>{children}</>; // sign-in screens: no app chrome
 
@@ -40,16 +53,17 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <AppSwitcher className="mb-4" />
         <nav className="relative flex flex-col gap-2">
           {/* sliding highlight: items are h-11 + gap-2 = 3.25rem apart */}
-          <span aria-hidden className="absolute inset-x-0 top-0 h-11 rounded-2xl bg-surface-2 shadow-[0_1px_0_rgb(255_255_255/.05)_inset]"
+          <span aria-hidden className="absolute inset-x-0 top-0 h-11 rounded-2xl bg-white/[0.07] ring-1 ring-white/10"
             style={{ transform: `translateY(${idx * 3.25}rem)`, transition: `transform .5s ${spring}` }}>
             <span key={idx} className="absolute left-0 top-2.5 h-6 w-1 rounded-full bg-pink"
               style={{ animation: `grow .45s ${spring} both` }} />
           </span>
           {NAV.map((n, i) => (
             <Link key={n.href} href={n.href}
-              className={`group relative flex h-11 items-center gap-3 rounded-2xl px-4 text-sm transition-colors duration-300 ${i === idx ? "text-white" : "text-muted hover:bg-white/[0.03] hover:text-white"}`}>
+              className={`group relative flex h-11 items-center gap-3 rounded-2xl px-4 text-sm font-medium transition-colors duration-300 ${i === idx ? "text-white" : "text-muted hover:bg-white/[0.04] hover:text-white"}`}>
               <Icon name={n.icon} className={`size-5 transition-transform duration-500 ${i === idx ? "scale-110 text-pink" : "group-hover:translate-x-0.5"}`} />
-              <span className={`transition-transform duration-500 ${i === idx ? "translate-x-1" : ""}`}>{n.label}</span>
+              <span className={`flex-1 transition-transform duration-500 ${i === idx ? "translate-x-1" : ""}`}>{n.label}</span>
+              <kbd className="num hidden rounded border border-line px-1.5 text-[10px] text-muted/60 xl:block">{i + 1}</kbd>
             </Link>
           ))}
         </nav>
@@ -72,7 +86,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         {NAV.map((n) => (
           <Link key={n.href} href={n.href} aria-label={n.label}
             className={`relative flex flex-1 flex-col items-center gap-1 rounded-[1.4rem] py-2.5 text-[11px] transition-all duration-300 ${active(n.href) ? "text-white" : "text-muted active:scale-95"}`}>
-            <Icon name={n.icon} className={`size-[22px] transition ${active(n.href) ? "text-pink drop-shadow-[0_0_8px_rgb(255_77_141/0.6)]" : ""}`} />
+            <Icon name={n.icon} className={`size-[22px] transition ${active(n.href) ? "text-pink" : ""}`} />
             {n.label}
           </Link>
         ))}

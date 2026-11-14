@@ -88,7 +88,7 @@ function WorkoutView({ hub, routine, onEdit, onNew }: { hub: State; routine: Rou
         {routine.days.map((d) => (
           <button key={d.id} onClick={() => setDayId(d.id)}
             className={`relative shrink-0 rounded-2xl px-4 py-2.5 text-sm transition-all duration-300 ${day.id === d.id ? "text-black" : "bg-white/[0.04] text-muted hover:text-white"}`}
-            style={day.id === d.id ? { background: d.color, boxShadow: `0 8px 24px -8px ${d.color}` } : undefined}>
+            style={day.id === d.id ? { background: d.color } : undefined}>
             <span className="font-semibold">{d.name || "Sin nombre"}</span>
             {planned === d.id && <span className={`ml-2 rounded-full px-1.5 py-0.5 text-[9px] uppercase tracking-wider ${day.id === d.id ? "bg-black/15" : "bg-white/10"}`}>hoy</span>}
           </button>
@@ -108,7 +108,7 @@ function WorkoutView({ hub, routine, onEdit, onNew }: { hub: State; routine: Rou
               ))}
             </div>
           </div>
-          <Ring value={doneSets / totalSets} size={104} stroke={9} colors={[day.color, "#8b5cf6"]}>
+          <Ring value={doneSets / totalSets} size={104} stroke={9} colors={[day.color, "#8e8e9a"]}>
             <div><p className="num text-2xl font-bold leading-none"><CountUp value={Math.round((doneSets / totalSets) * 100)} />%</p><p className="mt-1 text-[9px] uppercase tracking-widest text-muted">sesión</p></div>
           </Ring>
         </div>
@@ -271,7 +271,7 @@ function RestTimer({ rest, color, onDone, onAdd }: { rest: { end: number; total:
   useEffect(() => { if (left === 0) { navigator.vibrate?.([200, 100, 200]); const t = setTimeout(onDone, 1200); return () => clearTimeout(t); } }, [left, onDone]);
   return (
     <div className="glass fixed inset-x-4 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 !bg-surface-2/95 mx-auto flex max-w-sm items-center gap-3 rounded-3xl p-2.5 pr-3 shadow-2xl shadow-black/60 animate-rise lg:bottom-8">
-      <Ring value={left / rest.total} size={48} stroke={4} colors={[color, "#8b5cf6"]}><Icon name="clock" className="size-4 text-muted" /></Ring>
+      <Ring value={left / rest.total} size={48} stroke={4} colors={[color, "#8e8e9a"]}><Icon name="clock" className="size-4 text-muted" /></Ring>
       <div className="flex-1">
         <p className="text-[10px] uppercase tracking-widest text-muted">{left ? "Descanso" : "¡A por la siguiente!"}</p>
         <p className="num text-2xl font-semibold">{fmtRest(left)}</p>
@@ -369,7 +369,7 @@ function Summary({ open, onClose, hub, day, today, slots }: { open: boolean; onC
   return (
     <Sheet open={open} onClose={onClose} title={`${day.name} completado`}>
       <div className="space-y-4 pb-2">
-        <div className="relative overflow-hidden rounded-3xl p-6 text-center" style={{ background: `linear-gradient(140deg, ${day.color}33, #8b5cf622)` }}>
+        <div className="relative overflow-hidden rounded-3xl p-6 text-center" style={{ background: `linear-gradient(140deg, ${day.color}33, #8e8e9a22)` }}>
           <p className="text-[10px] uppercase tracking-widest text-muted">Volumen total</p>
           <p className="mt-1 text-5xl font-extralight"><CountUp value={vol} /><span className="ml-1 text-lg text-muted">kg</span></p>
           {prevVol > 0 && (
