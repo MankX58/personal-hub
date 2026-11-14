@@ -1,9 +1,7 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth/client";
-import { Icon, Logo } from "@/components/icons";
-import { Ring } from "@/components/ui";
+import { Logo } from "@/components/icons";
 
 const ERRORS: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "Correo o contraseña incorrectos.",
@@ -23,7 +21,6 @@ function safeRedirect() {
 }
 
 export default function SignIn() {
-  const router = useRouter();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,7 +29,8 @@ export default function SignIn() {
   const [busy, setBusy] = useState<"" | "email" | "google">("");
   const [error, setError] = useState("");
 
-  const done = () => { router.replace(safeRedirect()); router.refresh(); };
+  // recarga completa: el servidor lee la cookie nueva y no queda estado viejo en memoria
+  const done = () => window.location.replace(safeRedirect());
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,43 +58,24 @@ export default function SignIn() {
   };
 
   return (
-    <div className="relative grid min-h-dvh overflow-hidden lg:grid-cols-[1.1fr_1fr]">
-      {/* Showcase (desktop) */}
-      <section className="relative hidden flex-col justify-between p-12 lg:flex">
+    <div className="relative grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      {/* Tu día: agenda que se va completando (solo decorativa) */}
+      <section aria-hidden className="relative hidden flex-col justify-between overflow-hidden border-r border-line p-10 lg:flex xl:p-14">
         <Brand />
-        <div className="max-w-lg">
-          <h1 className="text-5xl font-semibold leading-[1.05] tracking-tight animate-rise">
-            Tu día y tu entreno,<br /><span className="text-white/45">en un solo lugar.</span>
-          </h1>
-          <div className="mt-12 grid grid-cols-[auto_1fr] gap-4">
-            <div className="card flex items-center gap-4 p-5 animate-rise [animation-delay:120ms]">
-              <Ring value={0.8} size={72} stroke={7}><span className="num text-lg font-semibold">4/5</span></Ring>
-              <div><p className="text-[10px] uppercase tracking-widest text-muted">Semana</p><p className="text-sm">sesiones</p></div>
-            </div>
-            <div className="card p-5 animate-rise [animation-delay:200ms]">
-              <p className="text-[10px] uppercase tracking-widest text-muted">1RM estimado</p>
-              <p className="num mt-1 text-3xl font-light">82,5<span className="ml-1 text-sm text-muted">kg</span></p>
-              <p className="num mt-1 flex items-center text-xs text-teal"><Icon name="up" className="size-3.5" stroke={2.5} />+12,4 %</p>
-            </div>
-            <div className="card col-span-2 flex h-28 items-end gap-2 p-5 animate-rise [animation-delay:280ms]">
-              {[30, 45, 38, 60, 52, 70, 64, 88].map((h, i) => (
-                <span key={i} className="flex-1 origin-bottom rounded-md" style={{ height: `${h}%`, background: i === 7 ? "#87b2c6" : "rgb(255 255 255 / .08)", boxShadow: i === 7 ? "0 0 18px #87b2c666" : undefined, animation: `grow .8s ${400 + i * 60}ms cubic-bezier(.2,.8,.2,1) both` }} />
-              ))}
-            </div>
-          </div>
-        </div>
-        <p className="text-xs text-muted">Tareas · Rutina PPL + UL · Progreso</p>
+        <Agenda />
+        <p className="text-xs text-muted">Tareas del día · Rutina de gimnasio · Progreso</p>
       </section>
 
-      {/* Form */}
-      <section className="relative flex items-center justify-center px-4 py-10 sm:px-8">
+      {/* Acceso */}
+      <section className="flex items-center justify-center px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-8">
         <div className="w-full max-w-sm animate-rise">
-          <div className="mb-10 lg:hidden"><Brand /></div>
-          <h2 className="text-3xl font-semibold tracking-tight">{mode === "in" ? "Hola de nuevo" : "Crea tu cuenta"}</h2>
-          <p className="mt-2 text-sm text-muted">{mode === "in" ? "Entra para seguir con tu día." : "Tus datos se sincronizan entre tu celular y tu PC."}</p>
+          <div className="mb-8 lg:hidden"><Brand /></div>
+          <MiniAgenda />
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{mode === "in" ? "Hola de nuevo" : "Empieza tu día"}</h1>
+          <p className="mt-2 text-sm text-muted">{mode === "in" ? "Entra para ver lo que te toca hoy." : "Crea tu cuenta: tareas y entreno, sincronizados en todos tus dispositivos."}</p>
 
           <button onClick={google} disabled={!!busy}
-            className="btn-primary mt-8 flex w-full items-center justify-center gap-3 rounded-2xl py-3.5 active:scale-[.98] disabled:opacity-60">
+            className="btn-primary mt-7 flex h-12 w-full items-center justify-center gap-3 rounded-2xl active:scale-[.98] disabled:opacity-60">
             {busy === "google" ? <Spinner dark /> : <GoogleLogo />}
             Continuar con Google
           </button>
@@ -105,35 +84,40 @@ export default function SignIn() {
             <span className="h-px flex-1 bg-line" />o con tu correo<span className="h-px flex-1 bg-line" />
           </div>
 
-          {/* mode switch */}
-          <div className="relative mb-4 flex rounded-2xl bg-surface-2 p-1 text-sm" role="tablist">
+          <div className="relative mb-4 flex rounded-2xl bg-surface-2 p-1 text-sm" role="tablist" aria-label="Modo de acceso">
             <span aria-hidden className="seg-on absolute inset-y-1 left-1 w-[calc(50%-0.25rem)] rounded-xl"
-              style={{ transform: `translateX(${mode === "up" ? 100 : 0}%)`, transition: "transform .45s cubic-bezier(.34,1.4,.5,1)" }} />
+              style={{ transform: `translateX(${mode === "up" ? 100 : 0}%)`, transition: "transform .4s cubic-bezier(.34,1.3,.5,1)" }} />
             {([["in", "Entrar"], ["up", "Crear cuenta"]] as const).map(([v, l]) => (
               <button key={v} type="button" role="tab" aria-selected={mode === v} onClick={() => { setMode(v); setError(""); }}
-                className={`relative z-10 flex-1 rounded-xl py-2.5 transition-colors duration-300 ${mode === v ? "text-white" : "text-muted"}`}>{l}</button>
+                className={`relative z-10 h-10 flex-1 rounded-xl transition-colors duration-300 ${mode === v ? "text-white" : "text-muted"}`}>{l}</button>
             ))}
           </div>
 
           <form onSubmit={submit} className="space-y-3">
-            <div className={`grid transition-[grid-template-rows,opacity] duration-[400ms] ${mode === "up" ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`} inert={mode !== "up"}>
-              <div className="min-h-0 overflow-hidden">
-                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" autoComplete="name" className="field" aria-label="Nombre" />
-              </div>
-            </div>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" autoComplete="email" className="field" aria-label="Correo" />
-            <div className="relative">
+            {mode === "up" && (
+              <label className="block animate-fade">
+                <span className="sr-only">Nombre</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre" autoComplete="name" className="field text-base" />
+              </label>
+            )}
+            <label className="block">
+              <span className="sr-only">Correo</span>
+              <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com" autoComplete="email" inputMode="email" className="field text-base" />
+            </label>
+            <label className="relative block">
+              <span className="sr-only">Contraseña</span>
               <input type={show ? "text" : "password"} required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
-                placeholder="Contraseña" autoComplete={mode === "in" ? "current-password" : "new-password"} className="field pr-20" aria-label="Contraseña" />
-              <button type="button" onClick={() => setShow((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2.5 py-1.5 text-xs text-muted transition hover:text-white">
+                placeholder="Contraseña (mín. 8)" autoComplete={mode === "in" ? "current-password" : "new-password"} className="field pr-20 text-base" />
+              <button type="button" onClick={() => setShow((s) => !s)} aria-pressed={show}
+                className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-lg px-3 text-xs text-muted transition hover:text-white">
                 {show ? "Ocultar" : "Ver"}
               </button>
-            </div>
+            </label>
 
-            {error && <p role="alert" className="rounded-xl bg-pink/10 px-3 py-2.5 text-sm text-pink animate-fade">{error}</p>}
+            {error && <p role="alert" className="rounded-xl border border-red-400/25 bg-red-400/10 px-3 py-2.5 text-sm text-red-300 animate-fade">{error}</p>}
 
             <button disabled={!!busy}
-              className="seg-on flex w-full items-center justify-center gap-2 rounded-2xl border border-line py-3.5 font-medium transition active:scale-[.98] disabled:opacity-60">
+              className="seg-on flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-line font-medium transition active:scale-[.98] disabled:opacity-60">
               {busy === "email" && <Spinner />}
               {mode === "in" ? "Entrar" : "Crear cuenta"}
             </button>
@@ -141,6 +125,59 @@ export default function SignIn() {
         </div>
       </section>
     </div>
+  );
+}
+
+// Agenda de ejemplo: las tareas se marcan una a una; el entreno lleva el acento de la app.
+const DAY: { t: string; label: string; gym?: boolean }[] = [
+  { t: "07:00", label: "Despertar sin snooze" },
+  { t: "08:30", label: "Leer 20 minutos" },
+  { t: "13:00", label: "Revisar pendientes" },
+  { t: "18:00", label: "Empuje · pecho, hombro, tríceps", gym: true },
+  { t: "21:30", label: "Planear mañana" },
+];
+
+function Agenda() {
+  return (
+    <div className="max-w-md">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted">Hoy</p>
+      <h2 className="mt-2 text-4xl font-semibold leading-[1.1] tracking-tight xl:text-5xl">
+        Tu día y tu entreno,<br /><span className="text-muted">en un solo lugar.</span>
+      </h2>
+      <ol className="relative mt-10 space-y-3">
+        {DAY.map((d, i) => (
+          <li key={d.t} className="grid grid-cols-[3rem_1rem_1fr] items-center gap-3 animate-rise" style={{ animationDelay: `${150 + i * 90}ms` }}>
+            <span className="num text-xs text-muted">{d.t}</span>
+            <span className="grid size-4 place-items-center rounded-full border border-line bg-bg">
+              {/* cada tarea se marca después de la anterior */}
+              <span className="size-2 rounded-full bg-pink [animation:pop_.35s_cubic-bezier(.3,1.6,.5,1)_both]" style={{ animationDelay: `${900 + i * 450}ms` }} />
+            </span>
+            <span className={`card flex items-center justify-between gap-3 px-4 py-3 text-sm ${d.gym ? "border-pink/30" : ""}`}>
+              <span className="truncate">{d.label}</span>
+              {d.gym && <span className="shrink-0 rounded-full bg-pink/15 px-2 py-0.5 text-[10px] font-medium text-pink">Entreno</span>}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** En móvil y tablet: tres tareas compactas sobre el formulario, para que se entienda de qué va la app. */
+function MiniAgenda() {
+  return (
+    <ul aria-hidden className="mb-7 space-y-2 lg:hidden">
+      {DAY.slice(1, 4).map((d, i) => (
+        <li key={d.t} className="card flex items-center gap-3 px-3.5 py-2.5 text-sm animate-rise" style={{ animationDelay: `${100 + i * 80}ms` }}>
+          <span className="grid size-5 shrink-0 place-items-center rounded-full border border-line">
+            <span className="size-2.5 rounded-full bg-pink [animation:pop_.35s_cubic-bezier(.3,1.6,.5,1)_both]" style={{ animationDelay: `${700 + i * 400}ms` }} />
+          </span>
+          <span className="num w-11 shrink-0 text-xs text-muted">{d.t}</span>
+          <span className="truncate">{d.label}</span>
+          {d.gym && <span className="ml-auto shrink-0 rounded-full bg-pink/15 px-2 py-0.5 text-[10px] font-medium text-pink">Entreno</span>}
+        </li>
+      ))}
+    </ul>
   );
 }
 

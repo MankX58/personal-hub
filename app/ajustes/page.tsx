@@ -119,7 +119,7 @@ function Account() {
     setBusy(true);
     try {
       await disconnect(); // flush unsynced changes first
-      await fetch("/api/auth/sign-out", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
+      await fetch("/api/logout", { method: "POST", cache: "no-store" });
     } finally {
       // full reload: clears the cached session, router cache and in-memory data
       window.location.replace("/auth/sign-in");

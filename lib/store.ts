@@ -69,6 +69,11 @@ function applyRollover() {
   if (r) update(() => r);
 }
 
+/** El servidor ya no reconoce la sesión (cerrada, revocada o caducada): al login con recarga completa. */
+function expired() {
+  window.location.replace("/auth/sign-in");
+}
+
 async function push(leaving = false) {
   clearTimeout(pushTimer);
   if (!state || !userId) return;
@@ -76,6 +81,7 @@ async function push(leaving = false) {
   try {
     // keepalive lets the request survive closing the tab, but browsers reject keepalive bodies over 64 KB
     const res = await fetch("/api/state", { method: "PUT", body, headers: { "content-type": "application/json" }, keepalive: leaving && body.length < 60_000 });
+    if (res.status === 401) return expired();
     if (res.ok) localStorage.removeItem(pendingKey());
   } catch {} // offline: stays pending, retried on next change or next load
 }
@@ -84,6 +90,7 @@ async function pull() {
   if (!userId || isPending()) return;
   try {
     const res = await fetch("/api/state", { cache: "no-store" });
+    if (res.status === 401) return expired();
     if (!res.ok) return;
     const { data } = await res.json();
     if (data && !isPending()) {
@@ -106,6 +113,7 @@ export async function connect(uid: string) {
   try {
     if (isPending()) return void push(); // unsynced offline edits win
     const res = await fetch("/api/state", { cache: "no-store" });
+    if (res.status === 401) return expired();
     if (!res.ok) return;
     const { data } = await res.json();
     if (data) {
@@ -131,6 +139,8 @@ if (typeof window !== "undefined") {
     if (document.visibilityState === "visible") pull(); // pick up changes from other devices
     else if (isPending()) push(true);
   });
+  // volver con «atrás» después de cerrar sesión: no mostrar la página cacheada, que el servidor decida
+  window.addEventListener("pageshow", (e) => { if (e.persisted) window.location.reload(); });
 }
 
 function get(): State {

@@ -6,8 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Mi Espacio",
     start_url: "/",
     display: "standalone",
-    background_color: "#0a0a0f",
-    theme_color: "#0a0a0f",
+    background_color: "#0a0a0a",
+    theme_color: "#0a0a0a",
     icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
   };
 }
