@@ -138,6 +138,9 @@ function Account() {
         className="mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-line text-sm font-medium transition hover:border-red-400/40 hover:bg-red-400/10 hover:text-red-300 active:scale-[0.97] disabled:opacity-60">
         <Icon name="logout" className="size-4" />{busy ? "Saliendo…" : "Cerrar sesión"}
       </button>
+      <p className="mt-3 text-xs text-muted">
+        <a href="/terminos.html" target="_blank" rel="noreferrer" className="underline">Términos</a> · <a href="/privacidad.html" target="_blank" rel="noreferrer" className="underline">Privacidad</a>
+      </p>
     </section>
   );
 }
