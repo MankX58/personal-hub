@@ -6,6 +6,7 @@ import { Select } from "@/components/ui";
 import { disconnect, exportData, importData, update, useHub } from "@/lib/store";
 import Link from "next/link";
 import { WEEKDAYS, getRoutine } from "@/lib/routine";
+import { OtherApps } from "@/components/OtherApps";
 
 const ORDER = [1, 2, 3, 4, 5, 6, 0]; // Monday first
 
@@ -141,6 +142,7 @@ function Account() {
       <p className="mt-3 text-xs text-muted">
         <a href="/terminos.html" target="_blank" rel="noreferrer" className="underline">Términos</a> · <a href="/privacidad.html" target="_blank" rel="noreferrer" className="underline">Privacidad</a>
       </p>
+      <OtherApps />
     </section>
   );
 }

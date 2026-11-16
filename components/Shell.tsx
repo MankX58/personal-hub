@@ -2,7 +2,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Icon, Logo, type IconName } from "./icons";
-import { AppSwitcher } from "./AppSwitcher";
 import { useEffect } from "react";
 import { connect, useHub, useToday } from "@/lib/store";
 import { authClient } from "@/lib/auth/client";
@@ -50,7 +49,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <p className="text-xs text-muted">Tareas y entreno</p>
           </div>
         </div>
-        <AppSwitcher className="mb-4" />
         <nav className="relative flex flex-col gap-2">
           {/* sliding highlight: items are h-11 + gap-2 = 3.25rem apart */}
           <span aria-hidden className="absolute inset-x-0 top-0 h-11 rounded-2xl bg-white/[0.07] ring-1 ring-white/10"
@@ -78,7 +76,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <p className="truncate text-[15px] font-semibold">Mi Espacio</p>
             <p className="truncate text-xs text-muted">Tareas y entreno</p>
           </div>
-          <AppSwitcher className="w-[7.5rem] shrink-0" />
         </header>
         {hub ? children : <div className="grid h-[60dvh] place-items-center"><div className="grad size-10 animate-glow rounded-2xl" /></div>}
       </main>
